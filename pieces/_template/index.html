@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Piece Name — BAD UI UX</title>
+<style>
+  /* ── Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, sans-serif; background: #f9f9f9; min-height: 100vh; }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #000;
+    border: 2px solid #000;
+    padding: 6px 12px;
+    box-shadow: 3px 3px 0 #000;
+    background: #fff;
+    transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Meta bar at bottom ── */
+  .meta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 2px solid #000;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    font-size: 12px;
+    gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: 2px solid #000;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  /* ── Your bad UI goes in here ── */
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 80px 24px;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../index.html">← Gallery</a>
+
+<div class="stage">
+
+  <!-- ═══════════════════════════════════════════════
+       PUT YOUR BAD UI HERE
+  ════════════════════════════════════════════════ -->
+
+</div>
+
+<div class="meta">
+  <span class="meta-title">Piece Name</span>
+  <span class="meta-sin">UX sin: describe the crime</span>
+  <span class="meta-cat">Category</span>
+</div>
+
+</body>
+</html>

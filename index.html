@@ -167,6 +167,7 @@ tailwind.config = {
   </div>
 </footer>
 
+<script src="./pieces/registry.js"></script>
 <script>
 const CAT_COLORS = {
   'Interactions': '#FF6B6B',
@@ -177,20 +178,7 @@ const CAT_COLORS = {
   'Layout':       '#FD9644',
 };
 
-const pieces = [
-  { id: 'erratic-slider',    title: 'The Erratic Volume Slider',   description: 'Drag right to go quieter. Drag left to go louder. Sometimes neither.',                          category: 'Interactions', tags: ['slider','audio','controls'],      icon: 'volume_up',      status: 'coming-soon', href: '#', sin: 'Violates direct manipulation' },
-  { id: 'moving-target',     title: 'The Moving Target',            description: 'The delete button sprints away from your cursor every time you hover.',                          category: 'Interactions', tags: ['button','hover','delete'],         icon: 'ads_click',      status: 'coming-soon', href: '#', sin: "Fitt's Law violation" },
-  { id: 'password-nightmare',title: 'Password Nightmare',           description: "Requires 14 chars, 2 emojis, a prime number, and your firstborn's name.",                       category: 'Interactions', tags: ['form','password','validation'],    icon: 'lock',           status: 'coming-soon', href: '#', sin: 'Hostile form design' },
-  { id: 'confirm-loop',      title: 'The Confirm Loop',             description: 'Are you sure? Are you REALLY sure? 17 dialogs to delete one tiny file.',                        category: 'Interactions', tags: ['dialog','confirm','friction'],     icon: 'help',           status: 'coming-soon', href: '#', sin: 'Alert fatigue' },
-  { id: 'invisible-submit',  title: 'Invisible Submit',             description: "The submit button is white. The background is white. It's definitely there.",                   category: 'Dark Patterns',tags: ['button','visibility','contrast'],  icon: 'visibility_off', status: 'coming-soon', href: '#', sin: 'Hidden affordance' },
-  { id: 'fake-progress',     title: 'The Fake Progress Bar',        description: 'Loads smoothly to 99%… then stops. Forever. The content was already rendered.',                 category: 'Dark Patterns',tags: ['loading','feedback','deception'],  icon: 'hourglass_empty',status: 'coming-soon', href: '#', sin: 'False feedback loop' },
-  { id: 'cookie-wall',       title: 'Cookie Wall of Doom',          description: 'A GDPR consent modal covers the entire viewport. The dismiss X is 1×1 px.',                     category: 'Dark Patterns',tags: ['modal','gdpr','consent'],          icon: 'cookie',         status: 'coming-soon', href: '#', sin: 'Hostile defaults' },
-  { id: 'mandatory-account', title: 'Mandatory Account Checkout',   description: 'You must create an account to check out. Creating an account clears your cart.',                category: 'Dark Patterns',tags: ['checkout','auth','friction'],      icon: 'shopping_cart',  status: 'coming-soon', href: '#', sin: 'Forced registration' },
-  { id: 'font-lottery',      title: 'Font Size Lottery',            description: 'Every paragraph renders at a random font size between 4 px and 96 px on load.',                 category: 'Typography',   tags: ['font','readability','size'],       icon: 'text_fields',    status: 'coming-soon', href: '#', sin: 'Typographic chaos' },
-  { id: 'low-contrast',      title: 'Accessible™ Color Scheme',     description: 'A carefully crafted palette with a 1.1:1 contrast ratio. WCAG-compliant, probably.',            category: 'Color Horror', tags: ['contrast','accessibility','wcag'], icon: 'palette',        status: 'coming-soon', href: '#', sin: 'WCAG Level F' },
-  { id: 'eternal-spinner',   title: 'The Eternal Spinner',          description: 'Loading… loading… The content was fully rendered on page load. Still loading.',                  category: 'Animation',    tags: ['loading','spinner','ux'],          icon: 'autorenew',      status: 'coming-soon', href: '#', sin: 'Phantom loading state' },
-  { id: 'autocomplete-tyrant',title: 'Autocomplete Tyrant',         description: 'Autocorrects "John" to "Johann Sebastian Bach." Every. Single. Time.',                          category: 'Interactions', tags: ['input','autocomplete','autocorrect'],icon: 'spellcheck',   status: 'coming-soon', href: '#', sin: 'Hostile automation' },
-];
+const pieces = window.PIECES;
 
 let activeCategory = 'All';
 let searchQuery = '';
@@ -277,7 +265,7 @@ function renderGrid(items) {
         </div>
       </div>`;
     card.addEventListener('click', () => {
-      if (isLive) { window.location.href = piece.href; }
+      if (isLive) { window.location.href = `./pieces/${piece.id}/`; }
       else { showToast(`"${piece.title}" — coming soon`); }
     });
     grid.appendChild(card);
