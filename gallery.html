@@ -65,13 +65,59 @@ tailwind.config = {
 </script>
 <style>
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  .neobrutal-shadow { box-shadow: 4px 4px 0px 0px #000000; }
-  .neobrutal-shadow-sm { box-shadow: 2px 2px 0px 0px #000000; }
-  .piece-card { box-shadow: 3px 3px 0px 0px #000; transition: transform 0.12s ease, box-shadow 0.12s ease; }
-  .piece-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px 0px #000; }
-  .cat-btn.active { background: #000; color: #fff; }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .neobrutal-shadow    { box-shadow: 4px 4px 0 #000; }
+  .neobrutal-shadow-sm { box-shadow: 2px 2px 0 #000; }
+
+  /* ── Tilt card ─────────────────────────────────────────────── */
+  .tilt-wrap {
+    border: 2px solid #000;
+    background: #fff;
+    overflow: hidden;
+    will-change: transform;
+    box-shadow: 4px 4px 0 #000;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ── Preview area ──────────────────────────────────────────── */
+  .card-preview {
+    position: relative;
+    overflow: hidden;
+    height: 210px;
+    background: #f0f0f0;
+    border-bottom: 2px solid #000;
+  }
+  .card-preview iframe {
+    border: none;
+    width: 900px;
+    height: 580px;
+    transform-origin: 0 0;
+    pointer-events: none;
+    display: block;
+  }
+
+  /* ── Card info ─────────────────────────────────────────────── */
+  .card-info {
+    padding: 13px 15px 15px;
+  }
+  .card-title {
+    font-family: Inter, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-meta {
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    color: #bbb;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Misc ──────────────────────────────────────────────────── */
   #toast { transition: opacity 0.2s ease; }
   #toast.hiding { opacity: 0; }
 </style>
@@ -91,8 +137,8 @@ tailwind.config = {
       <span class="font-display-lg text-display-lg uppercase tracking-tighter text-primary select-none">BAD UI UX</span>
     </div>
     <div class="w-1/3 flex justify-end items-center gap-md">
-      <button id="randomBtn" class="cursor-target border-2 border-primary px-sm py-xs font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-colors duration-200 active:scale-95 neobrutal-shadow-sm">Random</button>
-      <button id="submitBtn" class="cursor-target bg-primary text-on-primary px-sm py-xs font-label-md text-label-md hover:opacity-80 active:scale-95 border-2 border-primary neobrutal-shadow-sm">Submit</button>
+      <button id="randomBtn" class="border-2 border-primary px-sm py-xs font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-colors duration-200 active:scale-95 neobrutal-shadow-sm">Random</button>
+      <button id="submitBtn" class="bg-primary text-on-primary px-sm py-xs font-label-md text-label-md hover:opacity-80 active:scale-95 border-2 border-primary neobrutal-shadow-sm">Submit</button>
       <button id="shuffleBtn" class="hover:bg-primary hover:text-on-primary transition-colors duration-200 p-xs active:scale-95 flex items-center justify-center border-2 border-primary neobrutal-shadow-sm">
         <span class="material-symbols-outlined">shuffle</span>
       </button>
@@ -100,14 +146,8 @@ tailwind.config = {
   </div>
 </nav>
 
-<!-- Category filter bar -->
-<div class="fixed top-[71px] w-full z-40 bg-surface border-b-2 border-primary">
-  <div id="filterBar" class="flex gap-xs px-margin-mobile md:px-margin-desktop py-xs overflow-x-auto scrollbar-hide max-w-[1200px] mx-auto">
-  </div>
-</div>
-
 <!-- Main -->
-<main class="flex-grow pt-[116px] pb-xl px-margin-mobile md:px-margin-desktop w-full max-w-[1200px] mx-auto">
+<main class="flex-grow pt-[71px] pb-xl px-margin-mobile md:px-margin-desktop w-full max-w-[1200px] mx-auto">
   <div class="flex justify-between items-center py-md">
     <span id="resultCount" class="font-caption text-caption text-secondary"></span>
     <span class="font-caption text-caption text-secondary uppercase tracking-widest hidden sm:block">Handcrafted UX crimes</span>
@@ -142,7 +182,7 @@ tailwind.config = {
           <li>Open a PR</li>
         </ol>
       </div>
-      <a href="#" class="flex items-center justify-center gap-xs border-2 border-primary bg-primary text-on-primary py-sm font-label-md text-label-md neobrutal-shadow-sm hover:opacity-80 transition-opacity">
+      <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener" class="flex items-center justify-center gap-xs border-2 border-primary bg-primary text-on-primary py-sm font-label-md text-label-md neobrutal-shadow-sm hover:opacity-80 transition-opacity">
         <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span>
         Open a PR on GitHub
       </a>
@@ -160,8 +200,7 @@ tailwind.config = {
   <div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-lg w-full max-w-[1200px] mx-auto opacity-80 hover:opacity-100 transition-opacity">
     <div class="font-label-md text-label-md font-bold">BAD UI UX</div>
     <div class="flex gap-md">
-      <a class="text-secondary hover:text-primary transition-colors" href="#">GitHub</a>
-      <a class="text-secondary hover:text-primary transition-colors" href="#">Star</a>
+      <a class="text-secondary hover:text-primary transition-colors" href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">GitHub</a>
     </div>
     <div>© 2026 BAD UI UX</div>
   </div>
@@ -169,50 +208,62 @@ tailwind.config = {
 
 <script src="./pieces/registry.js"></script>
 <script>
-const CAT_COLORS = {
-  'Interactions': '#FF6B6B',
-  'Dark Patterns': '#A29BFE',
-  'Typography':   '#55EFC4',
-  'Color Horror': '#FDCB6E',
-  'Animation':    '#74B9FF',
-  'Layout':       '#FD9644',
-};
-
 const pieces = window.PIECES;
-
-let activeCategory = 'All';
 let searchQuery = '';
 let displayedPieces = [...pieces];
 
-function buildFilterBar() {
-  const bar = document.getElementById('filterBar');
-  const categories = ['All', ...new Set(pieces.map(p => p.category))];
-  categories.forEach(cat => {
-    const count = cat === 'All' ? pieces.length : pieces.filter(p => p.category === cat).length;
-    const btn = document.createElement('button');
-    btn.className = 'cat-btn whitespace-nowrap border-2 border-primary px-sm py-xs font-label-md text-label-md neobrutal-shadow-sm hover:bg-primary hover:text-on-primary transition-colors duration-150 active:scale-95';
-    if (cat === 'All') btn.classList.add('active');
-    btn.innerHTML = `${cat}&thinsp;<span style="opacity:0.45;font-family:monospace;font-size:11px">${count}</span>`;
-    btn.addEventListener('click', () => {
-      activeCategory = cat;
-      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      filterAndRender();
-    });
-    bar.appendChild(btn);
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m] = iso.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// ── Spring tilt effect ────────────────────────────────────────────────────────
+function bindTilt(el) {
+  const AMP = 10, SCALE_ON = 1.04;
+  let tRX = 0, tRY = 0, tS = 1;
+  let cRX = 0, cRY = 0, cS = 1;
+  let raf = null;
+
+  function tick() {
+    cRX += (tRX - cRX) * 0.14;
+    cRY += (tRY - cRY) * 0.14;
+    cS  += (tS  - cS)  * 0.14;
+    el.style.transform = `perspective(700px) rotateX(${cRX}deg) rotateY(${cRY}deg) scale(${cS})`;
+    raf = (Math.abs(tRX - cRX) + Math.abs(tRY - cRY) > 0.04 || Math.abs(tS - cS) > 0.001)
+      ? requestAnimationFrame(tick) : null;
+  }
+
+  el.addEventListener('mousemove', e => {
+    const r = el.getBoundingClientRect();
+    tRX = -((e.clientY - r.top  - r.height / 2) / (r.height / 2)) * AMP;
+    tRY =  ((e.clientX - r.left - r.width  / 2) / (r.width  / 2)) * AMP;
+    tS = SCALE_ON;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+
+  el.addEventListener('mouseleave', () => {
+    tRX = 0; tRY = 0; tS = 1;
+    if (!raf) raf = requestAnimationFrame(tick);
   });
 }
 
+// ── Scale iframes to fill preview width ──────────────────────────────────────
+function scaleIframes() {
+  document.querySelectorAll('.card-preview').forEach(preview => {
+    const iframe = preview.querySelector('iframe');
+    if (!iframe) return;
+    iframe.style.transform = `scale(${preview.clientWidth / 900})`;
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
 function filterAndRender() {
   let filtered = [...pieces];
-  if (activeCategory !== 'All') filtered = filtered.filter(p => p.category === activeCategory);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter(p =>
-      p.title.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.tags.some(t => t.includes(q)) ||
-      p.sin.toLowerCase().includes(q)
+      p.title.toLowerCase().includes(q) || p.sin.toLowerCase().includes(q)
     );
   }
   displayedPieces = filtered;
@@ -220,56 +271,46 @@ function filterAndRender() {
 }
 
 function renderGrid(items) {
-  const grid = document.getElementById('cardGrid');
+  const grid  = document.getElementById('cardGrid');
   const empty = document.getElementById('emptyState');
   const countEl = document.getElementById('resultCount');
   grid.innerHTML = '';
 
   if (items.length === 0) {
     grid.classList.add('hidden');
-    empty.classList.remove('hidden');
-    empty.classList.add('flex');
+    empty.classList.remove('hidden'); empty.classList.add('flex');
     countEl.textContent = '0 pieces';
     return;
   }
 
   grid.classList.remove('hidden');
-  empty.classList.add('hidden');
-  empty.classList.remove('flex');
+  empty.classList.add('hidden'); empty.classList.remove('flex');
   countEl.textContent = `${items.length} piece${items.length !== 1 ? 's' : ''}`;
 
   items.forEach(piece => {
-    const color = CAT_COLORS[piece.category] || '#E2E2E2';
-    const isLive = piece.status === 'live';
     const card = document.createElement('div');
-    card.className = 'cursor-target piece-card border-2 border-primary bg-surface flex flex-col cursor-pointer overflow-hidden';
+    card.className = 'tilt-wrap';
     card.dataset.id = piece.id;
+
+    const datePart   = fmtDate(piece.dateAdded);
+    const creditPart = piece.credit ? `made by ${piece.credit}` : '';
+    const meta = [datePart, creditPart].filter(Boolean).join(' · ');
+
     card.innerHTML = `
-      <div class="flex items-center justify-center relative" style="height:160px;background:${color}">
-        <span class="material-symbols-outlined" style="font-size:72px;color:rgba(0,0,0,0.18);font-variation-settings:'FILL' 1,'wght' 300,'GRAD' 0,'opsz' 48">${piece.icon}</span>
-        <span class="absolute top-xs right-xs font-mono font-bold px-xs border-2 uppercase tracking-wider" style="font-size:10px;padding-top:2px;padding-bottom:2px;${isLive ? 'background:#000;color:#fff;border-color:#000' : 'background:#fff;color:#000;border-color:#000'}">${isLive ? 'LIVE' : 'SOON'}</span>
+      <div class="card-preview">
+        <iframe src="./pieces/${piece.id}/" scrolling="no" tabindex="-1" loading="lazy" title="${piece.title} preview"></iframe>
       </div>
-      <div class="p-md flex flex-col gap-xs flex-grow">
-        <div class="flex items-center gap-xs">
-          <span class="inline-block w-2 h-2 border border-black/20 flex-shrink-0" style="background:${color}"></span>
-          <span class="font-label-md uppercase text-secondary" style="font-size:11px;letter-spacing:0.08em">${piece.category}</span>
-        </div>
-        <h3 class="font-headline-md text-headline-md text-primary">${piece.title}</h3>
-        <p class="font-body-md text-secondary flex-grow" style="font-size:15px">${piece.description}</p>
-        <div class="flex flex-wrap gap-xs mt-sm">
-          ${piece.tags.map(t => `<span class="font-caption text-caption border border-outline-variant px-xs text-secondary" style="padding-top:1px;padding-bottom:1px">#${t}</span>`).join('')}
-        </div>
-        <div class="flex justify-between items-center mt-sm pt-sm border-t border-outline-variant">
-          <span class="font-caption text-secondary italic" style="font-size:11px">${piece.sin}</span>
-          ${isLive ? `<span class="font-label-md text-label-md text-primary flex items-center gap-[2px]">Open <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span></span>` : ''}
-        </div>
+      <div class="card-info">
+        <div class="card-title">${piece.title}</div>
+        ${meta ? `<div class="card-meta">${meta}</div>` : ''}
       </div>`;
-    card.addEventListener('click', () => {
-      if (isLive) { window.location.href = `./pieces/${piece.id}/`; }
-      else { showToast(`"${piece.title}" — coming soon`); }
-    });
+
+    card.addEventListener('click', () => window.location.href = `./pieces/${piece.id}/`);
+    bindTilt(card);
     grid.appendChild(card);
   });
+
+  requestAnimationFrame(scaleIframes);
 }
 
 function clearSearch() {
@@ -290,8 +331,9 @@ function showToast(msg) {
   }, 2500);
 }
 
-buildFilterBar();
+// ── Init ─────────────────────────────────────────────────────────────────────
 filterAndRender();
+window.addEventListener('resize', scaleIframes);
 
 document.getElementById('searchInput').addEventListener('input', e => {
   searchQuery = e.target.value.trim();
@@ -311,17 +353,14 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 });
 
 document.getElementById('shuffleBtn').addEventListener('click', () => {
-  const shuffled = [...displayedPieces].sort(() => Math.random() - 0.5);
-  renderGrid(shuffled);
+  renderGrid([...displayedPieces].sort(() => Math.random() - 0.5));
   showToast('Shuffled');
 });
 
-document.getElementById('submitBtn').addEventListener('click', () => {
-  document.getElementById('submitModal').classList.remove('hidden');
-});
-document.getElementById('closeModal').addEventListener('click', () => {
-  document.getElementById('submitModal').classList.add('hidden');
-});
+document.getElementById('submitBtn').addEventListener('click', () =>
+  document.getElementById('submitModal').classList.remove('hidden'));
+document.getElementById('closeModal').addEventListener('click', () =>
+  document.getElementById('submitModal').classList.add('hidden'));
 document.getElementById('submitModal').addEventListener('click', e => {
   if (e.target === document.getElementById('submitModal'))
     document.getElementById('submitModal').classList.add('hidden');
