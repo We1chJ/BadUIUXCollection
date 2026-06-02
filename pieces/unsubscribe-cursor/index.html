@@ -6,7 +6,7 @@
 <title>Unsubscribe — BAD UI UX</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Inter, Arial, sans-serif; background: #fff; min-height: 100vh; }
+  body { font-family: Inter, Arial, sans-serif; background: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
   /* ── Back button ── */
   .back {
@@ -69,15 +69,6 @@
   .pill-sin   { color: rgba(255,255,255,0.65); font-style: italic; }
 
 
-  /* ── Stage ── */
-  .stage {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 80px 24px;
-  }
-
   /* ── The bad UI ── */
   .unsubscribe-btn {
     padding: 18px 48px;
@@ -104,9 +95,7 @@
 
 <a class="back" href="../../gallery.html">← Gallery</a>
 
-<div class="stage">
-  <button class="unsubscribe-btn">unsubscribe</button>
-</div>
+<button class="unsubscribe-btn">unsubscribe</button>
 
 <!-- Glass footer pill -->
 <div id="footer-bar">

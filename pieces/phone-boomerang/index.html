@@ -80,19 +80,25 @@
     background: #fff; cursor: pointer; min-width: 180px;
   }
 
-  #glass-bar {
+  #footer-bar {
     position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
     z-index: 9000; display: flex; align-items: center; gap: 18px;
-    padding: 12px 28px; background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15); font-size: 13px;
-    white-space: nowrap; max-width: 90vw;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    font-family: Inter, sans-serif; font-size: 13px; white-space: nowrap; color: #fff;
   }
-  .bar-title  { font-weight: 600; color: rgba(255,255,255,0.95); }
-  .bar-sep    { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
-  .bar-sin    { color: rgba(255,255,255,0.5); font-style: italic; font-size: 12px; }
-  .bar-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin   { color: rgba(255,255,255,0.65); font-style: italic; }
 </style>
 </head>
 <body>
@@ -122,12 +128,14 @@
   </div>
 </div>
 
-<div id="glass-bar">
-  <span class="bar-title">Phone Boomerang</span>
-  <span class="bar-sep"></span>
-  <span class="bar-sin">the control refuses to hold its value — it springs back before you can pick</span>
-  <span class="bar-sep"></span>
-  <span class="bar-credit">made by Reddit</span>
+<div id="footer-bar">
+  <span class="pill-title">Phone Boomerang</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">the control refuses to hold its value — it springs back before you can pick</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
 </div>
 
 <script>
@@ -177,6 +185,27 @@ pickBtn.addEventListener('click', () => {
 });
 
 render();
+</script>
+
+<script>
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12; curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) { raf = requestAnimationFrame(tick); }
+    else { curX = tarX; curY = tarY; bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`; raf = null; }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) { tarX = dx / STRENGTH; tarY = dy / STRENGTH; }
+    else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
 </script>
 </body>
 </html>
