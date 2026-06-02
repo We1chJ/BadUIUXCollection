@@ -87,6 +87,38 @@
   #coords       { left: 24px;  color: #444; }
   #piece-count  { right: 24px; color: #444; }
 
+  /* ── Glass footer bar ── */
+  #footer-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 18px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    font-size: 12px;
+  }
+  #footer-bar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 15px; height: 15px; }
+  .footer-sep { width: 1px; height: 14px; background: rgba(255, 255, 255, 0.22); }
+
   /* ── Content ── */
   .center {
     display: flex;
@@ -164,6 +196,15 @@
 
 <div id="coords">X: 0 &nbsp; Y: 0</div>
 <div id="piece-count"></div>
+
+<div id="footer-bar">
+  <a class="cursor-target" href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+    We1chJ/BadUIUXCollection
+  </a>
+  <span class="footer-sep"></span>
+  <a class="cursor-target" href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">⭐ Star</a>
+</div>
 
 <div class="center">
   <h1 class="title">BAD UI UX</h1>
@@ -649,6 +690,7 @@ function loop() {
 }
 
 document.addEventListener('click', e => {
+  if (e.target.closest('#footer-bar')) return;  // don't shatter the footer
   spawnShatter(e.clientX, e.clientY);
   if (!animating) { animating = true; requestAnimationFrame(loop); }
 });
