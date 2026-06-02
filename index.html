@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>BAD UI UX</title>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500&family=Inter:wght@600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500&family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,8 +15,67 @@
     align-items: center;
     justify-content: center;
     font-family: Inter, sans-serif;
+    cursor: none;
+    overflow: hidden;
   }
 
+  /* ── Target cursor ── */
+  #target-cursor {
+    position: fixed;
+    top: 0; left: 0;
+    width: 0; height: 0;
+    pointer-events: none;
+    z-index: 9999;
+    will-change: transform;
+  }
+
+  #cursor-dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 4px; height: 4px;
+    background: #000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+
+  .tc-corner {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 12px; height: 12px;
+    will-change: transform;
+  }
+  .tc-corner.tl { border-top: 3px solid #000; border-left: 3px solid #000; }
+  .tc-corner.tr { border-top: 3px solid #000; border-right: 3px solid #000; }
+  .tc-corner.br { border-bottom: 3px solid #000; border-right: 3px solid #000; }
+  .tc-corner.bl { border-bottom: 3px solid #000; border-left: 3px solid #000; }
+
+  /* ── Corner readouts ── */
+  #coords {
+    position: fixed;
+    bottom: 20px; left: 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #999;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+    z-index: 9998;
+    user-select: none;
+  }
+
+  #piece-count {
+    position: fixed;
+    bottom: 20px; right: 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #ccc;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+    z-index: 9998;
+    user-select: none;
+  }
+
+  /* ── Content ── */
   .center {
     display: flex;
     flex-direction: column;
@@ -24,6 +83,8 @@
     gap: 48px;
     padding: 24px;
     text-align: center;
+    position: relative;
+    z-index: 1;
   }
 
   .title {
@@ -33,6 +94,15 @@
     line-height: 1;
     letter-spacing: -0.03em;
     color: #000;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    font-weight: 400;
+    color: #aaa;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: -32px;
   }
 
   .buttons {
@@ -54,7 +124,7 @@
     border: 2px solid #000;
     box-shadow: 3px 3px 0 #000;
     padding: 16px 40px;
-    cursor: pointer;
+    cursor: none;
     width: 220px;
     display: inline-flex;
     align-items: center;
@@ -80,27 +150,177 @@
 </head>
 <body>
 
+<!-- Target cursor -->
+<div id="target-cursor">
+  <div id="cursor-dot"></div>
+  <div class="tc-corner tl"></div>
+  <div class="tc-corner tr"></div>
+  <div class="tc-corner br"></div>
+  <div class="tc-corner bl"></div>
+</div>
+
+<!-- Readouts -->
+<div id="coords">X: 0 &nbsp; Y: 0</div>
+<div id="piece-count"></div>
+
 <div class="center">
   <h1 class="title">BAD UI UX</h1>
+  <p class="subtitle">where good design comes to die</p>
 
   <div class="buttons">
-    <a class="btn" href="./gallery.html">Pick One</a>
-    <button class="btn filled" onclick="goRandom()">Random</button>
+    <a class="btn cursor-target" href="./gallery.html">Pick One</a>
+    <button class="btn filled cursor-target" onclick="goRandom()">Random</button>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="./pieces/registry.js"></script>
 <script>
-  function goRandom() {
-    const live = (window.PIECES || []).filter(p => p.status === 'live');
-    if (live.length) {
-      const pick = live[Math.floor(Math.random() * live.length)];
-      window.location.href = './pieces/' + pick.id + '/';
-    } else {
-      window.location.href = './gallery.html';
-    }
-  }
-</script>
+// ── Piece count ──────────────────────────────────────────────────────────────
+const total = (window.PIECES || []).length;
+const live  = (window.PIECES || []).filter(p => p.status === 'live').length;
+document.getElementById('piece-count').textContent = live + ' / ' + total + ' live';
 
+// ── Random nav ───────────────────────────────────────────────────────────────
+function goRandom() {
+  const livePieces = (window.PIECES || []).filter(p => p.status === 'live');
+  if (livePieces.length) {
+    const pick = livePieces[Math.floor(Math.random() * livePieces.length)];
+    window.location.href = './pieces/' + pick.id + '/';
+  } else {
+    window.location.href = './gallery.html';
+  }
+}
+
+// ── TargetCursor (vanilla JS port) ──────────────────────────────────────────
+const CORNER_SIZE  = 12;
+const BORDER_W     = 3;
+const SPIN_DUR     = 2;
+const HOVER_DUR    = 0.2;
+
+const cursorEl  = document.getElementById('target-cursor');
+const dotEl     = document.getElementById('cursor-dot');
+const corners   = Array.from(document.querySelectorAll('.tc-corner'));
+
+const initPos = [
+  { x: -CORNER_SIZE * 1.5, y: -CORNER_SIZE * 1.5 }, // tl
+  { x:  CORNER_SIZE * 0.5, y: -CORNER_SIZE * 1.5 }, // tr
+  { x:  CORNER_SIZE * 0.5, y:  CORNER_SIZE * 0.5 }, // br
+  { x: -CORNER_SIZE * 1.5, y:  CORNER_SIZE * 0.5 }, // bl
+];
+
+gsap.set(cursorEl, {
+  xPercent: -50, yPercent: -50,
+  x: window.innerWidth / 2, y: window.innerHeight / 2,
+});
+corners.forEach((c, i) => gsap.set(c, initPos[i]));
+
+// Spin
+let spinTl = gsap.timeline({ repeat: -1 })
+  .to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
+
+// Mouse move
+const coordsEl = document.getElementById('coords');
+window.addEventListener('mousemove', e => {
+  gsap.to(cursorEl, { x: e.clientX, y: e.clientY, duration: 0.1, ease: 'power3.out' });
+  coordsEl.textContent = 'X: ' + e.clientX + '   Y: ' + e.clientY;
+});
+
+// Click scale
+window.addEventListener('mousedown', () => {
+  gsap.to(dotEl,    { scale: 0.5, duration: 0.15 });
+  gsap.to(cursorEl, { scale: 0.85, duration: 0.15 });
+});
+window.addEventListener('mouseup', () => {
+  gsap.to(dotEl,    { scale: 1, duration: 0.25 });
+  gsap.to(cursorEl, { scale: 1, duration: 0.2 });
+});
+
+// Target hover
+let activeTarget    = null;
+let currentLeave    = null;
+let resumeTimeout   = null;
+let isActive        = false;
+let targetCornerPos = null;
+const activeStr     = { current: 0 };
+
+const ticker = () => {
+  if (!targetCornerPos || !isActive || activeStr.current === 0) return;
+  const cx = gsap.getProperty(cursorEl, 'x');
+  const cy = gsap.getProperty(cursorEl, 'y');
+  corners.forEach((corner, i) => {
+    const tx = targetCornerPos[i].x - cx;
+    const ty = targetCornerPos[i].y - cy;
+    const cur_x = gsap.getProperty(corner, 'x');
+    const cur_y = gsap.getProperty(corner, 'y');
+    const dur = activeStr.current >= 0.99 ? 0.2 : 0.05;
+    gsap.to(corner, {
+      x: cur_x + (tx - cur_x) * activeStr.current,
+      y: cur_y + (ty - cur_y) * activeStr.current,
+      duration: dur, ease: 'power1.out', overwrite: 'auto',
+    });
+  });
+};
+
+window.addEventListener('mouseover', e => {
+  const target = e.target.closest('.cursor-target');
+  if (!target || target === activeTarget) return;
+
+  if (activeTarget && currentLeave) {
+    activeTarget.removeEventListener('mouseleave', currentLeave);
+  }
+  if (resumeTimeout) { clearTimeout(resumeTimeout); resumeTimeout = null; }
+
+  activeTarget = target;
+  isActive = true;
+
+  spinTl.pause();
+  gsap.killTweensOf(cursorEl, 'rotation');
+  gsap.set(cursorEl, { rotation: 0 });
+
+  const rect = target.getBoundingClientRect();
+  const cx   = gsap.getProperty(cursorEl, 'x');
+  const cy   = gsap.getProperty(cursorEl, 'y');
+
+  targetCornerPos = [
+    { x: rect.left  - BORDER_W,               y: rect.top    - BORDER_W },
+    { x: rect.right + BORDER_W - CORNER_SIZE,  y: rect.top    - BORDER_W },
+    { x: rect.right + BORDER_W - CORNER_SIZE,  y: rect.bottom + BORDER_W - CORNER_SIZE },
+    { x: rect.left  - BORDER_W,               y: rect.bottom + BORDER_W - CORNER_SIZE },
+  ];
+
+  gsap.ticker.add(ticker);
+  gsap.to(activeStr, { current: 1, duration: HOVER_DUR, ease: 'power2.out' });
+  corners.forEach((c, i) => {
+    gsap.to(c, { x: targetCornerPos[i].x - cx, y: targetCornerPos[i].y - cy, duration: 0.2, ease: 'power2.out' });
+  });
+
+  currentLeave = () => {
+    gsap.ticker.remove(ticker);
+    isActive = false;
+    targetCornerPos = null;
+    gsap.set(activeStr, { current: 0 });
+    activeTarget = null;
+
+    corners.forEach((c, i) => {
+      gsap.to(c, { ...initPos[i], duration: 0.3, ease: 'power3.out' });
+    });
+
+    resumeTimeout = setTimeout(() => {
+      if (!activeTarget) {
+        spinTl.kill();
+        spinTl = gsap.timeline({ repeat: -1 })
+          .to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
+      }
+      resumeTimeout = null;
+    }, 50);
+
+    target.removeEventListener('mouseleave', currentLeave);
+    currentLeave = null;
+  };
+
+  target.addEventListener('mouseleave', currentLeave);
+});
+</script>
 </body>
 </html>
