@@ -524,8 +524,11 @@ function buildShards(clickX, clickY) {
   const spikes  = 5 + (Math.random() * 3 | 0);       // star points (5-7)
   const phase   = Math.random() * Math.PI * 2;
   const starAmp = 0.28 + Math.random() * 0.16;       // jaggedness of the star edge
-  // jagged star radius at a given angle
-  const edgeR = a => R * (1 - starAmp + starAmp * (0.5 + 0.5 * Math.cos((a + phase) * spikes)));
+  const pA = Math.random() * 6.283, pB = Math.random() * 6.283;
+  // jagged star radius at a given angle, with organic noise so it's not a clean curve
+  const edgeR = a =>
+    R * (1 - starAmp + starAmp * (0.5 + 0.5 * Math.cos((a + phase) * spikes)))
+      * (1 + 0.18 * Math.sin(a * 3 + pA) + 0.12 * Math.sin(a * 7 + pB));
 
   const span = R * 2.6;
   const ox = clickX - span / 2;
@@ -544,7 +547,8 @@ function buildShards(clickX, clickY) {
       const y0 = oy + ys[r], y1 = oy + ys[r + 1];
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       const ang = Math.atan2(cy - clickY, cx - clickX);
-      if (Math.hypot(cx - clickX, cy - clickY) > edgeR(ang)) continue;
+      // ragged edge: random per-rect threshold so the outline frays
+      if (Math.hypot(cx - clickX, cy - clickY) > edgeR(ang) * (0.8 + Math.random() * 0.35)) continue;
       rects.push([
         { x: x0, y: y0 }, { x: x1, y: y0 },
         { x: x1, y: y1 }, { x: x0, y: y1 },
