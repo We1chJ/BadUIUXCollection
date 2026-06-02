@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pump It Volume! — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Card ── */
+  .card { width: 560px; max-width: 90vw; padding: 24px; }
+  h1 { font-size: 40px; font-weight: 500; color: #222; margin-bottom: 22px; }
+  .sub { font-size: 19px; color: #444; margin-bottom: 28px; }
+
+  /* ── Pump rig ── */
+  .rig { display: flex; align-items: flex-start; gap: 28px; margin-bottom: 30px; }
+
+  .pump {
+    position: relative;
+    width: 90px;
+    height: 300px;
+    flex-shrink: 0;
+  }
+  /* piston = T-handle + rod, the draggable part */
+  .piston {
+    position: absolute;
+    left: 17px;
+    top: 0;
+    width: 56px;
+    z-index: 1;
+    cursor: grab;
+    touch-action: none;
+  }
+  .piston:active { cursor: grabbing; }
+  .t-handle {
+    width: 56px; height: 16px; background: #3c3c3c; border-radius: 3px;
+  }
+  .rod {
+    width: 14px; height: 150px; background: #3c3c3c;
+    margin: 0 auto; border-radius: 2px;
+  }
+  .cap {
+    position: absolute; left: 8px; bottom: 178px;
+    width: 74px; height: 14px; background: #3c3c3c; border-radius: 3px;
+    z-index: 2;
+  }
+  .cylinder {
+    position: absolute; left: 13px; bottom: 14px;
+    width: 64px; height: 172px; background: #ffe61a; border-radius: 3px;
+    z-index: 2;
+  }
+  .base {
+    position: absolute; left: 4px; bottom: 0;
+    width: 82px; height: 14px; background: #3c3c3c; border-radius: 3px;
+    z-index: 2;
+  }
+  .hose {
+    position: absolute; left: 60px; bottom: 14px;
+    z-index: 1; overflow: visible;
+  }
+
+  /* ── Gauge (thermometer) ── */
+  .gauge {
+    position: relative;
+    width: 16px; height: 300px;
+    background: #ededed; border-radius: 999px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .gauge-fill {
+    position: absolute; left: 0; bottom: 0; width: 100%;
+    background: #2962ff; border-radius: 999px;
+    height: 5%;
+    transition: height 0.08s linear;
+  }
+  .warn { font-size: 19px; color: #b9b9b9; padding-top: 4px; }
+
+  .readout { font-size: 22px; color: #333; margin-bottom: 26px; }
+  .readout span { font-weight: 500; }
+
+  .pump-btn {
+    font-family: Inter, sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
+    color: #fff; background: #59b6e6; border: none;
+    padding: 16px 36px; border-radius: 4px; cursor: pointer;
+    transition: background 0.12s, transform 0.06s;
+  }
+  .pump-btn:hover { background: #46a8db; }
+  .pump-btn:active { transform: translateY(1px); }
+
+  /* ── Meta bar ── */
+  .meta {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 2px solid #000; background: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; font-size: 12px; gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; border: 2px solid #000; padding: 2px 8px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="card">
+  <h1>Pump It Volume!</h1>
+  <p class="sub">Keep on pumpin' it!</p>
+
+  <div class="rig">
+    <div class="pump">
+      <div class="piston" id="piston">
+        <div class="t-handle"></div>
+        <div class="rod"></div>
+      </div>
+      <div class="cap"></div>
+      <div class="cylinder"></div>
+      <div class="base"></div>
+      <svg class="hose" width="40" height="170">
+        <path d="M2 30 C 34 50, 34 60, 14 90 C -6 120, 30 140, 26 165"
+              fill="none" stroke="#3c3c3c" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="gauge"><div class="gauge-fill" id="fill"></div></div>
+
+    <p class="warn">Be careful, you could make the leak worse.</p>
+  </div>
+
+  <p class="readout">You're volume is at <span id="vol">5</span>%</p>
+
+  <button class="pump-btn" id="pumpBtn">PUMP</button>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Pump It Volume!</span>
+  <span class="meta-sin">UX sin: absurd physical effort for a one-click control — and it leaks</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
+<script>
+const piston  = document.getElementById('piston');
+const fill    = document.getElementById('fill');
+const volEl   = document.getElementById('vol');
+const pumpBtn = document.getElementById('pumpBtn');
+
+const TRAVEL = 90;          // px of vertical handle travel
+let handleTop = 0;          // current handle offset (0 = up, TRAVEL = down)
+let vol = 5;                // volume %
+
+function render() {
+  vol = Math.max(0, Math.min(100, vol));
+  fill.style.height = vol + '%';
+  volEl.textContent = Math.round(vol);
+}
+
+function setHandle(t) {
+  handleTop = Math.max(0, Math.min(TRAVEL, t));
+  piston.style.top = handleTop + 'px';
+}
+
+// ── Drag the handle (vertical only) — down-strokes pump air in ──
+let dragging = false, startY = 0, startTop = 0, lastTop = 0;
+
+piston.addEventListener('mousedown', e => {
+  dragging = true;
+  startY = e.clientY;
+  startTop = handleTop;
+  lastTop = handleTop;
+  piston.style.transition = 'none';
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const next = startTop + (e.clientY - startY);
+  setHandle(next);
+  const down = handleTop - lastTop;          // positive = pushing down
+  if (down > 0) vol += down * 0.16;          // only down-strokes add volume
+  lastTop = handleTop;
+  render();
+});
+
+window.addEventListener('mouseup', () => {
+  if (!dragging) return;
+  dragging = false;
+  piston.style.transition = 'top 0.12s ease';
+});
+
+// ── PUMP button: one automatic stroke ──
+pumpBtn.addEventListener('click', () => {
+  vol += 9;
+  render();
+  piston.style.transition = 'top 0.1s ease';
+  setHandle(TRAVEL);
+  setTimeout(() => setHandle(0), 110);
+});
+
+// ── The leak: drains constantly, worse the fuller it gets ──
+setInterval(() => {
+  vol -= 0.4 + vol * 0.06;
+  render();
+}, 400);
+
+render();
+</script>
+</body>
+</html>

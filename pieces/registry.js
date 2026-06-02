@@ -3,6 +3,16 @@
 // pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'pump-volume',
+    title: 'Pump It Volume!',
+    description: 'Raise the volume by manually pumping a bike pump. Drag the handle up and down. It leaks.',
+    category: 'Interactions',
+    tags: ['volume', 'pump', 'effort'],
+    icon: 'air',
+    status: 'live',
+    sin: 'Absurd physical effort for a one-click control',
+  },
+  {
     id: 'erratic-slider',
     title: 'The Erratic Volume Slider',
     description: 'Drag right to go quieter. Drag left to go louder. Sometimes neither.',
