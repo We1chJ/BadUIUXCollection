@@ -6,7 +6,7 @@ window.PIECES = [
     title: 'Unsubscribe',
     sin: "Custom cursor communicates contempt for the user's intent",
     dateAdded: '2026-06-02',
-    credit: 'Classic',
+    credit: 'Reddit',
   },
   {
     id: 'etch-a-phone',
