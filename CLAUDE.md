@@ -14,6 +14,12 @@ Bad design here is **intentional and crafted**. When building a piece:
 - Document *why* each piece is bad (the specific UX/UI sin being committed).
 - Be creative. There's a difference between lazy and deliberately awful.
 
+## Gallery Rules
+
+- **Only display pieces with an actual `pieces/{id}/index.html` file.** Never add placeholder or coming-soon entries to the gallery.
+- `pieces/registry.js` is the single source of truth. Only set `status: 'live'` when the file exists.
+- The gallery filters on `status === 'live'` — do not remove this guard.
+
 ## Tech Stack & Structure
 
 No stack is prescribed — each piece can be standalone HTML/CSS/JS, a React component, a Svelte app, etc. Organize by directory, one subdirectory per piece. Each should be self-contained and openable in a browser or run locally without setup.
