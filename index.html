@@ -395,12 +395,10 @@ const live  = (window.PIECES || []).filter(p => p.status === 'live').length;
 document.getElementById('piece-count').textContent = live + ' / ' + total + ' live';
 
 function goRandom() {
-  const livePieces = (window.PIECES || []).filter(p => p.status === 'live');
-  if (livePieces.length) {
-    const pick = livePieces[Math.floor(Math.random() * livePieces.length)];
+  const pieces = window.PIECES || [];
+  if (pieces.length) {
+    const pick = pieces[Math.floor(Math.random() * pieces.length)];
     window.location.href = './pieces/' + pick.id + '/';
-  } else {
-    window.location.href = './gallery.html';
   }
 }
 
