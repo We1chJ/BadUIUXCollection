@@ -20,7 +20,7 @@
   }
 
   /* ── Canvases ── */
-  #glitch-bg {
+  #dither-bg {
     position: fixed;
     inset: 0;
     z-index: 0;
@@ -145,7 +145,7 @@
 </head>
 <body>
 
-<canvas id="glitch-bg"></canvas>
+<canvas id="dither-bg"></canvas>
 <div id="vignette-outer"></div>
 <div id="vignette-center"></div>
 <canvas id="damage"></canvas>
@@ -174,78 +174,159 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="./pieces/registry.js"></script>
 <script>
-// ── LetterGlitch background ───────────────────────────────────────────────────
+// ── Dither background (WebGL2) ────────────────────────────────────────────────
 (function () {
-  const COLORS     = ['#2b4539', '#61dca3', '#61b3dc'];
-  const SPEED      = 50;   // ms between updates
-  const CHAR_W     = 10;
-  const CHAR_H     = 16;
-  const FONT_SIZE  = 16;
-  const CHARS      = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789');
+  const canvas = document.getElementById('dither-bg');
+  const gl = canvas.getContext('webgl2');
+  if (!gl) return;
 
-  const canvas = document.getElementById('glitch-bg');
-  const ctx    = canvas.getContext('2d');
-  let letters  = [], cols = 0, rows = 0, lastTick = 0;
+  const VS = `#version 300 es
+in vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+`;
 
-  function rndChar()  { return CHARS[Math.random() * CHARS.length | 0]; }
-  function rndRgb()   { const c = COLORS[Math.random() * COLORS.length | 0]; return hexToRgb(c); }
-  function hexToRgb(h) {
-    h = h.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (_, r, g, b) => r+r+g+g+b+b);
-    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
-    return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:0,g:0,b:0};
+  const FS = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform vec2  resolution;
+uniform float time;
+uniform float waveSpeed;
+uniform float waveFrequency;
+uniform float waveAmplitude;
+uniform vec3  waveColor;
+uniform vec2  mousePos;
+uniform int   enableMouse;
+uniform float mouseRadius;
+uniform float colorNum;
+uniform float pixelSize;
+
+vec4 mod289v(vec4 x){return x-floor(x*(1./289.))*289.;}
+vec4 permute(vec4 x){return mod289v(((x*34.)+1.)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+float cnoise(vec2 P){
+  vec4 Pi=floor(P.xyxy)+vec4(0.,0.,1.,1.);
+  vec4 Pf=fract(P.xyxy)-vec4(0.,0.,1.,1.);
+  Pi=mod289v(Pi);
+  vec4 ix=Pi.xzxz,iy=Pi.yyww,fx=Pf.xzxz,fy=Pf.yyww;
+  vec4 i=permute(permute(ix)+iy);
+  vec4 gx=fract(i*(1./41.))*2.-1.,gy=abs(gx)-.5,tx=floor(gx+.5);
+  gx-=tx;
+  vec2 g00=vec2(gx.x,gy.x),g10=vec2(gx.y,gy.y),g01=vec2(gx.z,gy.z),g11=vec2(gx.w,gy.w);
+  vec4 norm=taylorInvSqrt(vec4(dot(g00,g00),dot(g01,g01),dot(g10,g10),dot(g11,g11)));
+  g00*=norm.x;g01*=norm.y;g10*=norm.z;g11*=norm.w;
+  float n00=dot(g00,vec2(fx.x,fy.x)),n10=dot(g10,vec2(fx.y,fy.y)),
+        n01=dot(g01,vec2(fx.z,fy.z)),n11=dot(g11,vec2(fx.w,fy.w));
+  vec2 fade_xy=Pf.xy*Pf.xy*Pf.xy*(Pf.xy*(Pf.xy*6.-15.)+10.);
+  vec2 nx=mix(vec2(n00,n01),vec2(n10,n11),fade_xy.x);
+  return 2.3*mix(nx.x,nx.y,fade_xy.y);
+}
+float fbm(vec2 p){
+  float v=0.,a=1.,f=waveFrequency;
+  for(int i=0;i<4;i++){v+=a*abs(cnoise(p));p*=f;a*=waveAmplitude;}
+  return v;
+}
+float pattern(vec2 p){vec2 p2=p-time*waveSpeed;return fbm(p+fbm(p2));}
+
+const float B[64]=float[64](
+   0./64.,48./64.,12./64.,60./64., 3./64.,51./64.,15./64.,63./64.,
+  32./64.,16./64.,44./64.,28./64.,35./64.,19./64.,47./64.,31./64.,
+   8./64.,56./64., 4./64.,52./64.,11./64.,59./64., 7./64.,55./64.,
+  40./64.,24./64.,36./64.,20./64.,43./64.,27./64.,39./64.,23./64.,
+   2./64.,50./64.,14./64.,62./64., 1./64.,49./64.,13./64.,61./64.,
+  34./64.,18./64.,46./64.,30./64.,33./64.,17./64.,45./64.,29./64.,
+  10./64.,58./64., 6./64.,54./64., 9./64.,57./64., 5./64.,53./64.,
+  42./64.,26./64.,38./64.,22./64.,41./64.,25./64.,37./64.,21./64.
+);
+vec3 dither(vec2 uv,vec3 color){
+  vec2 sc=floor(uv*resolution/pixelSize);
+  int x=int(mod(sc.x,8.)),y=int(mod(sc.y,8.));
+  float t=B[y*8+x]-0.25,step=1./(colorNum-1.);
+  color+=t*step;
+  color=clamp(color-0.2,0.,1.);
+  return floor(color*(colorNum-1.)+0.5)/(colorNum-1.);
+}
+
+void main(){
+  vec2 uv=gl_FragCoord.xy/resolution;
+  vec2 nps=vec2(pixelSize)/resolution;
+  vec2 uvP=nps*floor(uv/nps);
+  vec2 wuv=uvP-0.5;
+  wuv.x*=resolution.x/resolution.y;
+  float f=pattern(wuv);
+  if(enableMouse==1){
+    vec2 wuvF=uv-0.5;
+    wuvF.x*=resolution.x/resolution.y;
+    vec2 mNDC=(mousePos/resolution.xy-0.5)*vec2(1.,-1.);
+    mNDC.x*=resolution.x/resolution.y;
+    f-=0.5*(1.-smoothstep(0.,mouseRadius,length(wuvF-mNDC)));
   }
+  vec3 col=mix(vec3(0.),waveColor,f);
+  col=dither(uv,col);
+  fragColor=vec4(col,1.);
+}
+`;
+
+  function mkShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const U = name => gl.getUniformLocation(prog, name);
+  const uRes=U('resolution'), uTime=U('time'), uWSpd=U('waveSpeed'),
+        uWFrq=U('waveFrequency'), uWAmp=U('waveAmplitude'), uWCol=U('waveColor'),
+        uMPos=U('mousePos'), uMEn=U('enableMouse'), uMRad=U('mouseRadius'),
+        uCNum=U('colorNum'), uPSz=U('pixelSize');
+
+  gl.uniform1f(uWSpd,  0.05);
+  gl.uniform1f(uWFrq,  3.0);
+  gl.uniform1f(uWAmp,  0.3);
+  gl.uniform3f(uWCol,  0.5, 0.5, 0.5);
+  gl.uniform1i(uMEn,   1);
+  gl.uniform1f(uMRad,  0.3);
+  gl.uniform1f(uCNum,  4.0);
+  gl.uniform1f(uPSz,   2.0);
+
+  let mx = 0, my = 0;
+  window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 
   function resize() {
     const dpr = devicePixelRatio || 1;
-    const W = innerWidth, H = innerHeight;
-    canvas.width  = W * dpr; canvas.height = H * dpr;
-    canvas.style.width  = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.ceil(W / CHAR_W); rows = Math.ceil(H / CHAR_H);
-    letters = Array.from({ length: cols * rows }, () => {
-      const c = rndRgb();
-      return { char: rndChar(), r: c.r, g: c.g, b: c.b, tr: c.r, tg: c.g, tb: c.b, p: 1 };
-    });
+    const W = innerWidth * dpr | 0, H = innerHeight * dpr | 0;
+    canvas.width = W; canvas.height = H;
+    canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px';
+    gl.viewport(0, 0, W, H);
+    gl.uniform2f(uRes, W, H);
   }
 
+  const t0 = performance.now();
   function draw() {
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    ctx.font = FONT_SIZE + 'px monospace';
-    ctx.textBaseline = 'top';
-    letters.forEach((l, i) => {
-      ctx.fillStyle = `rgb(${l.r|0},${l.g|0},${l.b|0})`;
-      ctx.fillText(l.char, (i % cols) * CHAR_W, (i / cols | 0) * CHAR_H);
-    });
-  }
-
-  function update() {
-    const n = Math.max(1, letters.length * 0.05 | 0);
-    for (let i = 0; i < n; i++) {
-      const l = letters[Math.random() * letters.length | 0];
-      if (!l) continue;
-      l.char = rndChar();
-      const t = rndRgb();
-      l.tr = t.r; l.tg = t.g; l.tb = t.b; l.p = 0;
-    }
-  }
-
-  function animate(now) {
-    requestAnimationFrame(animate);
-    // smooth color lerp every frame
-    let dirty = false;
-    letters.forEach(l => {
-      if (l.p < 1) {
-        l.r += (l.tr - l.r) * 0.08; l.g += (l.tg - l.g) * 0.08; l.b += (l.tb - l.b) * 0.08;
-        l.p += 0.05; dirty = true;
-      }
-    });
-    if (now - lastTick >= SPEED) { update(); lastTick = now; dirty = true; }
-    if (dirty) draw();
+    gl.uniform1f(uTime, (performance.now() - t0) / 1000);
+    const dpr = devicePixelRatio || 1;
+    gl.uniform2f(uMPos, mx * dpr, (innerHeight - my) * dpr);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(draw);
   }
 
   resize();
-  requestAnimationFrame(animate);
   window.addEventListener('resize', resize);
+  requestAnimationFrame(draw);
 })();
 
 // ── Piece count ──────────────────────────────────────────────────────────────
