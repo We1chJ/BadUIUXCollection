@@ -270,7 +270,7 @@ function scaleIframes() {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function filterAndRender() {
-  let filtered = [...pieces];
+  let filtered = pieces.filter(p => p.status === 'live');
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     filtered = filtered.filter(p =>
