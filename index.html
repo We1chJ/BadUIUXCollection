@@ -520,7 +520,7 @@ function buildSource() {
 
 // Star-burst impact of varied rectangles local to a click point.
 function buildShards(clickX, clickY) {
-  const R       = 38 + Math.random() * 34;          // randomized impact size
+  const R       = 70 + Math.random() * 60;          // randomized impact size
   const spikes  = 5 + (Math.random() * 3 | 0);       // star points (5-7)
   const phase   = Math.random() * Math.PI * 2;
   const starAmp = 0.28 + Math.random() * 0.16;       // jaggedness of the star edge
