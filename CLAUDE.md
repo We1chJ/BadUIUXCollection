@@ -25,7 +25,7 @@ Bad design here is **intentional and crafted**. When building a piece:
 
 1. **Back button** (top-left, fixed) — `<a class="back" href="../../gallery.html">← Gallery</a>` with the exact CSS from the template.
 2. **Stage wrapper** — `<div class="stage">` centered with `min-height: 100vh` and `padding: 80px 24px` so the bad UI has breathing room.
-3. **Glass footer pill** (`#footer-bar`, bottom-center, fixed) — the frosted-glass floating pill with the piece title, a separator, the UX sin (italic), another separator, the category badge, another separator, and the GitHub icon link. Copy the CSS and magnet-effect JS verbatim from the template; only swap in the piece-specific strings.
+3. **Glass footer pill** (`#footer-bar`, bottom-center, fixed) — the frosted-glass floating pill with the piece title, a separator, the UX sin (italic), a separator, and the GitHub icon link. Copy the CSS and magnet-effect JS verbatim from the template; only swap in the piece-specific strings.
 4. **Title tag** — `<title>Piece Name — BAD UI UX</title>`.
 
 Copy the template verbatim for the chrome (back button + pill CSS + pill HTML + magnet JS), then put the bad UI inside `.stage`. Do not omit or redesign any of these structural elements.
