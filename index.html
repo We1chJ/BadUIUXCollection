@@ -176,6 +176,9 @@
   .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #fff; }
   .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #fff; }
   .btn.filled { background: #fff; color: #000; }
+
+  /* electric-wrap: overflow visible so the border canvas can bleed out */
+  .electric-wrap { position: relative; overflow: visible; display: inline-block; }
 </style>
 </head>
 <body>
@@ -218,6 +221,12 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
       Random
     </button>
+    <div class="electric-wrap" id="manifesto-wrap">
+      <a class="btn cursor-target" href="./manifesto.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/></svg>
+        Manifesto
+      </a>
+    </div>
   </div>
 </div>
 
@@ -672,6 +681,79 @@ document.fonts.ready.then(() => {
 // Re-snapshot on resize so shards stay aligned with the current layout
 window.addEventListener('resize', () => {
   setTimeout(() => { buildSource().then(c => { sourceCanvas = c; }); }, 400);
+});
+
+// ── ElectricBorder ───────────────────────────────────────────────────────────
+function electricBorder(container, { color = '#5227FF', speed = 1, chaos = 0.12, borderRadius = 4 } = {}) {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:2;display:block;';
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const BO = 60;
+  let W, H, timeRef = 0, lastFrame = 0, animId;
+
+  function rnd(x) { return (Math.sin(x * 12.9898) * 43758.5453) % 1; }
+  function noise2D(x, y) {
+    const i = Math.floor(x), j = Math.floor(y), fx = x-i, fy = y-j;
+    const ux = fx*fx*(3-2*fx), uy = fy*fy*(3-2*fy);
+    return rnd(i+j*57)*(1-ux)*(1-uy) + rnd(i+1+j*57)*ux*(1-uy) +
+           rnd(i+(j+1)*57)*(1-ux)*uy + rnd(i+1+(j+1)*57)*ux*uy;
+  }
+  function octNoise(x, t, seed) {
+    let y=0, amp=chaos, freq=10;
+    const lat=1.6, gain=0.7;
+    for (let i=0;i<10;i++) { y+=amp*noise2D(freq*x+seed*100, t*freq*0.3); freq*=lat; amp*=gain; }
+    return y;
+  }
+  function corner(cx,cy,r,sa,al,p) { const a=sa+p*al; return {x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}; }
+  function rectPt(t, l, top, w, h, r) {
+    const sw=w-2*r, sh=h-2*r, ca=Math.PI*r/2, tot=2*sw+2*sh+4*ca;
+    let d=t*tot, a=0;
+    if(d<=a+sw){const p=(d-a)/sw;return{x:l+r+p*sw,y:top};}a+=sw;
+    if(ca>0&&d<=a+ca){const p=(d-a)/ca;return corner(l+w-r,top+r,r,-Math.PI/2,Math.PI/2,p);}a+=ca;
+    if(d<=a+sh){const p=(d-a)/sh;return{x:l+w,y:top+r+p*sh};}a+=sh;
+    if(ca>0&&d<=a+ca){const p=(d-a)/ca;return corner(l+w-r,top+h-r,r,0,Math.PI/2,p);}a+=ca;
+    if(d<=a+sw){const p=(d-a)/sw;return{x:l+w-r-p*sw,y:top+h};}a+=sw;
+    if(ca>0&&d<=a+ca){const p=(d-a)/ca;return corner(l+r,top+h-r,r,Math.PI/2,Math.PI/2,p);}a+=ca;
+    if(d<=a+sh){const p=(d-a)/sh;return{x:l,y:top+h-r-p*sh};}
+    const p=ca>0?(d-a)/ca:0; return corner(l+r,top+r,r,Math.PI,Math.PI/2,p);
+  }
+  function updateSize() {
+    const rect = container.getBoundingClientRect();
+    W = rect.width + BO*2; H = rect.height + BO*2;
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    ctx.resetTransform(); ctx.scale(dpr, dpr);
+  }
+  function draw(now) {
+    timeRef += ((now - lastFrame)/1000) * speed; lastFrame = now;
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.scale(dpr,dpr);
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const l=BO, t=BO, bw=W-BO*2, bh=H-BO*2;
+    const r=Math.min(borderRadius, Math.min(bw,bh)/2);
+    const samples = Math.floor((2*(bw+bh)+2*Math.PI*r)/2);
+    ctx.beginPath();
+    for (let i=0;i<=samples;i++) {
+      const prog=i/samples, pt=rectPt(prog,l,t,bw,bh,r);
+      const dx=pt.x+octNoise(prog*8,timeRef,0)*60;
+      const dy=pt.y+octNoise(prog*8,timeRef,1)*60;
+      i===0?ctx.moveTo(dx,dy):ctx.lineTo(dx,dy);
+    }
+    ctx.closePath(); ctx.stroke();
+    animId = requestAnimationFrame(draw);
+  }
+  updateSize();
+  lastFrame = performance.now();
+  animId = requestAnimationFrame(draw);
+  new ResizeObserver(updateSize).observe(container);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  electricBorder(document.getElementById('manifesto-wrap'), {
+    color: '#61dca3', speed: 0.7, chaos: 0.09, borderRadius: 2
+  });
 });
 
 // ── Magnet effect for footer pill ────────────────────────────────────────────

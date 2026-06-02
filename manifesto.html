@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Manifesto — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; min-height: 100vh; font-family: Inter, sans-serif; overflow-x: hidden; }
+
+  #glitch-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; display: block;
+  }
+  #vignette {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(circle, rgba(0,0,0,0) 35%, rgba(0,0,0,0.97) 100%);
+  }
+
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.25); padding: 6px 12px;
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .back:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
+
+  .page {
+    position: relative; z-index: 10;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 100px 32px 120px;
+  }
+
+  .manifesto {
+    max-width: 760px; width: 100%;
+    text-align: center;
+  }
+
+  .kicker {
+    font-family: Inter, sans-serif;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: #61dca3; margin-bottom: 32px;
+  }
+
+  .headline {
+    font-family: 'EB Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(42px, 8vw, 88px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 48px;
+  }
+  .headline em { font-style: italic; color: rgba(255,255,255,0.55); }
+
+  .body {
+    display: flex; flex-direction: column; gap: 0;
+  }
+
+  .para {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(20px, 3vw, 26px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.72);
+    margin-bottom: 32px;
+  }
+
+  .divider {
+    width: 40px; height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 4px auto 36px;
+  }
+
+  .closing {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 500;
+    line-height: 1.3;
+    color: #fff;
+    margin-top: 8px;
+  }
+  .closing .accent { color: #61dca3; }
+
+  #glass-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 28px; background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15); font-size: 13px;
+    white-space: nowrap; max-width: 90vw;
+  }
+  #glass-bar a {
+    color: rgba(255,255,255,0.8); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: color 0.15s;
+  }
+  #glass-bar a:hover { color: #fff; }
+  .bar-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  #glass-bar svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+
+<canvas id="glitch-canvas"></canvas>
+<div id="vignette"></div>
+<a class="back" href="./index.html">← Home</a>
+
+<div class="page">
+  <div class="manifesto">
+    <p class="kicker">Bad UI UX &nbsp;·&nbsp; Manifesto</p>
+
+    <h1 class="headline">
+      You've found<br>
+      the darkest corner<br>
+      <em>of the internet.</em>
+    </h1>
+
+    <div class="body">
+      <p class="para">
+        Here is a well-curated, purposefully bad UI/UX —
+        created by humans, for humans.
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="para">
+        At the age of AI, creativity, aesthetics, and user experience
+        have started to converge together. Seemingly all looking good and great.
+        When everything becomes standard, the truly great ones stop standing out —
+        because we all get used to it.
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="para">
+        This website serves as a sturdy ground holding
+        the bottom line of web design.
+        We fight against AI-generated design by showing the world what's bad —
+        and thus, they know what's good.
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="closing">
+        This is something<br>
+        AI can't do.<br>
+        <span class="accent">Only us can.</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="glass-bar">
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+    We1chJ/BadUIUXCollection
+  </a>
+  <span class="bar-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">⭐ Star</a>
+</div>
+
+<script>
+// ── LetterGlitch background ───────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('glitch-canvas');
+  const ctx = canvas.getContext('2d');
+  const COLORS = [
+    { r: 43,  g: 69,  b: 57  },
+    { r: 97,  g: 220, b: 163 },
+    { r: 97,  g: 179, b: 220 },
+  ];
+  const CHARS = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789');
+  const SPEED = 50, CW = 10, CH = 20, FS = 16;
+  let letters = [], cols = 0, rows = 0, lastT = Date.now(), animId = null, resizeT;
+
+  const rndChar  = () => CHARS[Math.floor(Math.random() * CHARS.length)];
+  const rndColor = () => { const c = COLORS[Math.floor(Math.random() * COLORS.length)]; return {...c}; };
+  const lerp = (a, b, t) => ({
+    r: Math.round(a.r + (b.r-a.r)*t),
+    g: Math.round(a.g + (b.g-a.g)*t),
+    b: Math.round(a.b + (b.b-a.b)*t)
+  });
+  const cs = c => `rgb(${c.r},${c.g},${c.b})`;
+
+  function init(c, r) {
+    cols = c; rows = r;
+    letters = Array.from({ length: c * r }, () => {
+      const col = rndColor();
+      return { char: rndChar(), color: col, target: rndColor(), progress: 1, cur: {...col} };
+    });
+  }
+
+  function resize() {
+    cancelAnimationFrame(animId);
+    const dpr = window.devicePixelRatio || 1;
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    init(Math.ceil(w / CW), Math.ceil(h / CH));
+    tick();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = `${FS}px monospace`; ctx.textBaseline = 'top';
+    letters.forEach((l, i) => {
+      ctx.fillStyle = cs(l.cur);
+      ctx.fillText(l.char, (i % cols) * CW, Math.floor(i / cols) * CH);
+    });
+  }
+
+  function update() {
+    const n = Math.max(1, Math.floor(letters.length * 0.05));
+    for (let i = 0; i < n; i++) {
+      const l = letters[Math.floor(Math.random() * letters.length)];
+      l.char = rndChar();
+      l.color = {...l.cur};
+      l.target = rndColor();
+      l.progress = 0;
+    }
+  }
+
+  function smooth() {
+    let dirty = false;
+    letters.forEach(l => {
+      if (l.progress < 1) {
+        l.progress = Math.min(1, l.progress + 0.05);
+        l.cur = lerp(l.color, l.target, l.progress);
+        dirty = true;
+      }
+    });
+    if (dirty) draw();
+  }
+
+  function tick() {
+    animId = requestAnimationFrame(function loop() {
+      const now = Date.now();
+      if (now - lastT >= SPEED) { update(); draw(); lastT = now; }
+      smooth();
+      animId = requestAnimationFrame(loop);
+    });
+  }
+
+  resize();
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(resize, 100); });
+})();
+
+// ── Magnet effect for glass bar ───────────────────────────────────────────────
+(function() {
+  const bar = document.getElementById('glass-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12; curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else { curX = tarX; curY = tarY; raf = null; }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width/2 + PADDING && Math.abs(dy) < r.height/2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>
