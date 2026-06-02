@@ -399,6 +399,36 @@ document.getElementById('submitModal').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('submitModal').classList.add('hidden');
 });
+
+// ── Magnet effect for footer pill ────────────────────────────────────────────
+(function() {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else {
+      tarX = 0; tarY = 0;
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
 </script>
 </body>
 </html>
