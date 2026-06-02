@@ -74,9 +74,34 @@ tailwind.config = {
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   #toast { transition: opacity 0.2s ease; }
   #toast.hiding { opacity: 0; }
+
+  /* ── Cursor ── */
+  body { cursor: none; }
+  #target-cursor {
+    position: fixed; top: 0; left: 0; width: 0; height: 0;
+    pointer-events: none; z-index: 9999; will-change: transform;
+  }
+  #cursor-dot {
+    position: absolute; top: 50%; left: 50%;
+    width: 4px; height: 4px; background: #000; border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .tc-corner { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; will-change: transform; }
+  .tc-corner.tl { border-top: 3px solid #000; border-left:  3px solid #000; }
+  .tc-corner.tr { border-top: 3px solid #000; border-right: 3px solid #000; }
+  .tc-corner.br { border-bottom: 3px solid #000; border-right: 3px solid #000; }
+  .tc-corner.bl { border-bottom: 3px solid #000; border-left:  3px solid #000; }
 </style>
 </head>
 <body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col">
+
+<div id="target-cursor">
+  <div id="cursor-dot"></div>
+  <div class="tc-corner tl"></div>
+  <div class="tc-corner tr"></div>
+  <div class="tc-corner br"></div>
+  <div class="tc-corner bl"></div>
+</div>
 
 <!-- Nav -->
 <nav class="bg-surface text-primary font-body-md text-body-md fixed top-0 w-full border-b-2 border-primary z-50">
@@ -91,8 +116,8 @@ tailwind.config = {
       <span class="font-display-lg text-display-lg uppercase tracking-tighter text-primary select-none">BAD UI UX</span>
     </div>
     <div class="w-1/3 flex justify-end items-center gap-md">
-      <button id="randomBtn" class="border-2 border-primary px-sm py-xs font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-colors duration-200 active:scale-95 neobrutal-shadow-sm">Random</button>
-      <button id="submitBtn" class="bg-primary text-on-primary px-sm py-xs font-label-md text-label-md hover:opacity-80 active:scale-95 border-2 border-primary neobrutal-shadow-sm">Submit</button>
+      <button id="randomBtn" class="cursor-target border-2 border-primary px-sm py-xs font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-colors duration-200 active:scale-95 neobrutal-shadow-sm">Random</button>
+      <button id="submitBtn" class="cursor-target bg-primary text-on-primary px-sm py-xs font-label-md text-label-md hover:opacity-80 active:scale-95 border-2 border-primary neobrutal-shadow-sm">Submit</button>
       <button id="shuffleBtn" class="hover:bg-primary hover:text-on-primary transition-colors duration-200 p-xs active:scale-95 flex items-center justify-center border-2 border-primary neobrutal-shadow-sm">
         <span class="material-symbols-outlined">shuffle</span>
       </button>
@@ -242,7 +267,7 @@ function renderGrid(items) {
     const color = CAT_COLORS[piece.category] || '#E2E2E2';
     const isLive = piece.status === 'live';
     const card = document.createElement('div');
-    card.className = 'piece-card border-2 border-primary bg-surface flex flex-col cursor-pointer overflow-hidden';
+    card.className = 'cursor-target piece-card border-2 border-primary bg-surface flex flex-col cursor-pointer overflow-hidden';
     card.dataset.id = piece.id;
     card.innerHTML = `
       <div class="flex items-center justify-center relative" style="height:160px;background:${color}">
@@ -329,6 +354,84 @@ document.getElementById('submitModal').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('submitModal').classList.add('hidden');
 });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+// ── TargetCursor ──────────────────────────────────────────────────────────────
+(function () {
+  const CORNER_SIZE = 12, SPIN_DUR = 2, HOVER_DUR = 0.2;
+  const cursorEl = document.getElementById('target-cursor');
+  const dotEl    = document.getElementById('cursor-dot');
+  const corners  = Array.from(document.querySelectorAll('.tc-corner'));
+  const initPos  = [
+    { x: -CORNER_SIZE * 1.5, y: -CORNER_SIZE * 1.5 },
+    { x:  CORNER_SIZE * 0.5, y: -CORNER_SIZE * 1.5 },
+    { x:  CORNER_SIZE * 0.5, y:  CORNER_SIZE * 0.5 },
+    { x: -CORNER_SIZE * 1.5, y:  CORNER_SIZE * 0.5 },
+  ];
+
+  gsap.set(cursorEl, { xPercent: -50, yPercent: -50, x: innerWidth / 2, y: innerHeight / 2 });
+  corners.forEach((c, i) => gsap.set(c, initPos[i]));
+
+  let spinTl = gsap.timeline({ repeat: -1 })
+    .to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
+
+  window.addEventListener('mousemove', e => {
+    gsap.to(cursorEl, { x: e.clientX, y: e.clientY, duration: 0.1, ease: 'power3.out' });
+  });
+  window.addEventListener('mousedown', () => {
+    gsap.to(dotEl,    { scale: 0.5,  duration: 0.15 });
+    gsap.to(cursorEl, { scale: 0.85, duration: 0.15 });
+  });
+  window.addEventListener('mouseup', () => {
+    gsap.to(dotEl,    { scale: 1, duration: 0.25 });
+    gsap.to(cursorEl, { scale: 1, duration: 0.2  });
+  });
+
+  let activeTarget = null, currentLeave = null, resumeTimeout = null;
+  let isActive = false, targetCornerPos = null;
+  const activeStr = { current: 0 };
+
+  gsap.ticker.add(() => {
+    if (!targetCornerPos || !isActive || activeStr.current === 0) return;
+    const cx = gsap.getProperty(cursorEl, 'x'), cy = gsap.getProperty(cursorEl, 'y');
+    corners.forEach((corner, i) => {
+      const tx = targetCornerPos[i].x - cx, ty = targetCornerPos[i].y - cy;
+      const cur_x = gsap.getProperty(corner, 'x'), cur_y = gsap.getProperty(corner, 'y');
+      const dur = activeStr.current >= 0.99 ? 0.2 : 0.05;
+      gsap.to(corner, { x: cur_x + (tx - cur_x) * activeStr.current, y: cur_y + (ty - cur_y) * activeStr.current, duration: dur, ease: 'power1.out', overwrite: 'auto' });
+    });
+  });
+
+  window.addEventListener('mouseover', e => {
+    const target = e.target.closest('.cursor-target');
+    if (!target || target === activeTarget) return;
+    if (activeTarget && currentLeave) activeTarget.removeEventListener('mouseleave', currentLeave);
+    if (resumeTimeout) { clearTimeout(resumeTimeout); resumeTimeout = null; }
+    activeTarget = target; isActive = true;
+    spinTl.pause();
+    gsap.killTweensOf(cursorEl, 'rotation');
+    gsap.set(cursorEl, { rotation: 0 });
+    const rect = target.getBoundingClientRect();
+    targetCornerPos = [
+      { x: rect.left,  y: rect.top    },
+      { x: rect.right, y: rect.top    },
+      { x: rect.right, y: rect.bottom },
+      { x: rect.left,  y: rect.bottom },
+    ];
+    gsap.to(activeStr, { current: 1, duration: HOVER_DUR, ease: 'power2.out' });
+    currentLeave = () => {
+      isActive = false; activeTarget = null;
+      gsap.to(activeStr, { current: 0, duration: HOVER_DUR, ease: 'power2.in',
+        onComplete: () => {
+          corners.forEach((c, i) => gsap.to(c, { x: initPos[i].x, y: initPos[i].y, duration: 0.3, ease: 'back.out(1.5)' }));
+          resumeTimeout = setTimeout(() => { spinTl.resume(); resumeTimeout = null; }, 300);
+        }
+      });
+    };
+    target.addEventListener('mouseleave', currentLeave, { once: true });
+  });
+})();
 </script>
 </body>
 </html>
