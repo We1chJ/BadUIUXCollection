@@ -343,13 +343,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
 document.getElementById('randomBtn').addEventListener('click', () => {
   if (!displayedPieces.length) return;
   const pick = displayedPieces[Math.floor(Math.random() * displayedPieces.length)];
-  const card = document.querySelector(`[data-id="${pick.id}"]`);
-  if (!card) return;
-  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  card.style.outline = '3px solid #000';
-  card.style.outlineOffset = '3px';
-  setTimeout(() => { card.style.outline = ''; card.style.outlineOffset = ''; }, 2000);
-  showToast(`"${pick.title}"`);
+  window.location.href = `./pieces/${pick.id}/`;
 });
 
 document.getElementById('shuffleBtn').addEventListener('click', () => {
