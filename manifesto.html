@@ -17,6 +17,10 @@
     position: fixed; inset: 0; z-index: 1; pointer-events: none;
     background: radial-gradient(circle, rgba(0,0,0,0) 35%, rgba(0,0,0,0.97) 100%);
   }
+  #dim {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: rgba(0,0,0,0.72);
+  }
 
   .back {
     position: fixed; top: 16px; left: 16px; z-index: 100;
@@ -109,6 +113,7 @@
 <body>
 
 <canvas id="glitch-canvas"></canvas>
+<div id="dim"></div>
 <div id="vignette"></div>
 <a class="back" href="./index.html">← Home</a>
 
