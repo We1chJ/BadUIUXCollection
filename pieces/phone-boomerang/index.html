@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Phone Boomerang — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Card ── */
+  .card { width: 640px; max-width: 90vw; padding: 24px; }
+  h1 { font-size: 44px; font-weight: 500; color: #222; margin-bottom: 26px; }
+  .sub { font-size: 22px; color: #333; margin-bottom: 42px; }
+  .label { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 18px; }
+
+  .row { display: flex; align-items: center; gap: 24px; }
+
+  /* ── Slider ── */
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1;
+    height: 6px; border-radius: 999px;
+    background: #e6e6e6;
+    cursor: pointer; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #c2c2c2; border: none; cursor: grab;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #c2c2c2; border: none; cursor: grab;
+  }
+
+  .phone {
+    font-size: 26px; color: #333; white-space: nowrap; min-width: 200px;
+  }
+
+  .status { font-size: 24px; color: #333; margin: 36px 0; }
+
+  .controls { display: flex; align-items: center; gap: 18px; }
+  .pick-btn {
+    font-family: Inter, sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
+    color: #fff; background: #59b6e6; border: none;
+    padding: 16px 40px; border-radius: 4px; cursor: pointer;
+    transition: background 0.12s, transform 0.06s;
+  }
+  .pick-btn:hover { background: #46a8db; }
+  .pick-btn:active { transform: translateY(1px); }
+
+  .speed {
+    font-family: Inter, sans-serif;
+    font-size: 18px; color: #333;
+    padding: 14px 18px; border: 1px solid #59b6e6; border-radius: 6px;
+    background: #fff; cursor: pointer; min-width: 180px;
+  }
+
+  /* ── Meta bar ── */
+  .meta {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 2px solid #000; background: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; font-size: 12px; gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; border: 2px solid #000; padding: 2px 8px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="card">
+  <h1>Phone Boomerang</h1>
+  <p class="sub">Time your choice.</p>
+
+  <p class="label">Phone</p>
+  <div class="row">
+    <input type="range" id="slider" min="0" max="100" step="0.1" value="20"/>
+    <span class="phone" id="phone">+1 (000) 000-0000</span>
+  </div>
+
+  <p class="status" id="status">You haven't picked a number yet.</p>
+
+  <div class="controls">
+    <button class="pick-btn" id="pick">PICK</button>
+    <select class="speed" id="speed">
+      <option value="220">Super Fast</option>
+      <option value="120">Fast</option>
+      <option value="60">Medium</option>
+      <option value="25">Slow</option>
+    </select>
+  </div>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Phone Boomerang</span>
+  <span class="meta-sin">UX sin: the control refuses to hold its value — it springs back before you can pick</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
+<script>
+const slider = document.getElementById('slider');
+const phoneEl = document.getElementById('phone');
+const statusEl = document.getElementById('status');
+const pickBtn = document.getElementById('pick');
+const speedEl = document.getElementById('speed');
+
+const HOME = 0;   // where the boomerang flies back to
+
+// Pseudo-random 10 digits from the slider position → looks like a scrambling number
+function digits(v) {
+  let x = (Math.floor(v * 1000) ^ 0x5f3759df) & 0x7fffffff;
+  let s = '';
+  for (let i = 0; i < 10; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; s += (x >> 16) % 10; }
+  return s;
+}
+function phoneFor(v) {
+  const d = digits(v);
+  return `+1 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
+function render() {
+  const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.background =
+    `linear-gradient(to right, #c2c2c2 ${pct}%, #e6e6e6 ${pct}%)`;
+  phoneEl.textContent = phoneFor(Number(slider.value));
+}
+
+// ── Boomerang: after you let go, the handle flies back HOME ──
+let returning = false, lastT = 0;
+function fly(now) {
+  if (!returning) return;
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  const speed = Number(speedEl.value);          // units per second
+  let v = Number(slider.value) - speed * dt;
+  if (v <= HOME) { v = HOME; returning = false; }
+  slider.value = v;
+  render();
+  if (returning) requestAnimationFrame(fly);
+}
+
+slider.addEventListener('input', () => { returning = false; render(); });
+slider.addEventListener('pointerdown', () => { returning = false; });
+slider.addEventListener('change', () => {            // released after a drag
+  if (Number(slider.value) > HOME) {
+    returning = true; lastT = performance.now();
+    requestAnimationFrame(fly);
+  }
+});
+
+pickBtn.addEventListener('click', () => {
+  statusEl.textContent = `You picked ${phoneFor(Number(slider.value))}`;
+});
+
+render();
+</script>
+</body>
+</html>

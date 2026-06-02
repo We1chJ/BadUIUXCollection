@@ -3,6 +3,26 @@
 // pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'date-slider',
+    title: 'Date Slider',
+    description: 'Pick your exact birthday with one slider spanning 125 years. One pixel ≈ months.',
+    category: 'Interactions',
+    tags: ['slider', 'date', 'precision'],
+    icon: 'calendar_month',
+    status: 'live',
+    sin: 'Continuous control for a precise discrete value',
+  },
+  {
+    id: 'phone-boomerang',
+    title: 'Phone Boomerang',
+    description: 'A phone-number slider whose handle springs back to the start — at the speed you pick.',
+    category: 'Interactions',
+    tags: ['slider', 'input', 'phone'],
+    icon: 'undo',
+    status: 'live',
+    sin: 'Control refuses to hold its value',
+  },
+  {
     id: 'pump-volume',
     title: 'Pump It Volume!',
     description: 'Raise the volume by manually pumping a bike pump. Drag the handle up and down. It leaks.',

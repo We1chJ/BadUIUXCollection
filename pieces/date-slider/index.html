@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Date Slider — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Card ── */
+  .card { width: 620px; max-width: 90vw; padding: 24px; }
+  h1 { font-size: 44px; font-weight: 500; color: #222; margin-bottom: 30px; }
+  .sub { font-size: 22px; color: #333; margin-bottom: 48px; }
+  .label { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 18px; }
+
+  .row { display: flex; align-items: center; gap: 24px; }
+
+  /* ── Slider ── */
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1;
+    height: 6px; border-radius: 999px;
+    background: #e2e2e2;
+    cursor: pointer;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #3b6cf6; border: none; cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #3b6cf6; border: none; cursor: pointer;
+  }
+
+  .date {
+    font-family: 'Courier New', monospace;
+    font-size: 20px; color: #444; white-space: nowrap;
+    min-width: 120px;
+  }
+
+  /* ── Meta bar ── */
+  .meta {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 2px solid #000; background: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; font-size: 12px; gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; border: 2px solid #000; padding: 2px 8px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="card">
+  <h1>Date Slider</h1>
+  <p class="sub">How precise is your mouse?</p>
+
+  <p class="label">Birthday</p>
+  <div class="row">
+    <input type="range" id="slider"/>
+    <span class="date" id="date">1982-01-26</span>
+  </div>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Date Slider</span>
+  <span class="meta-sin">UX sin: a continuous slider for a precise discrete value — one pixel ≈ months</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
+<script>
+const slider = document.getElementById('slider');
+const dateEl = document.getElementById('date');
+const DAY = 86400000;
+
+// Range: 1900-01-01 → today. Each step is one day.
+const minDay = Math.floor(Date.UTC(1900, 0, 1) / DAY);
+const maxDay = Math.floor(Date.now() / DAY);
+const startDay = Math.floor(Date.UTC(1982, 0, 26) / DAY);
+
+slider.min   = minDay;
+slider.max   = maxDay;
+slider.step  = 1;
+slider.value = startDay;
+
+function fmt(day) {
+  const d = new Date(day * DAY);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function render() {
+  const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.background =
+    `linear-gradient(to right, #3b6cf6 ${pct}%, #e2e2e2 ${pct}%)`;
+  dateEl.textContent = fmt(Number(slider.value));
+}
+
+slider.addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
