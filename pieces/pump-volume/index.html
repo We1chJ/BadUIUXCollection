@@ -93,22 +93,11 @@
     position: absolute; left: 0; bottom: 0; width: 100%;
     background: #2962ff; border-radius: 999px;
     height: 5%;
-    transition: height 0.08s linear;
   }
   .warn { font-size: 19px; color: #b9b9b9; padding-top: 4px; }
 
-  .readout { font-size: 22px; color: #333; margin-bottom: 26px; }
+  .readout { font-size: 22px; color: #333; }
   .readout span { font-weight: 500; }
-
-  .pump-btn {
-    font-family: Inter, sans-serif;
-    font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
-    color: #fff; background: #59b6e6; border: none;
-    padding: 16px 36px; border-radius: 4px; cursor: pointer;
-    transition: background 0.12s, transform 0.06s;
-  }
-  .pump-btn:hover { background: #46a8db; }
-  .pump-btn:active { transform: translateY(1px); }
 
   /* ── Meta bar ── */
   .meta {
@@ -154,8 +143,6 @@
   </div>
 
   <p class="readout">You're volume is at <span id="vol">5</span>%</p>
-
-  <button class="pump-btn" id="pumpBtn">PUMP</button>
 </div>
 
 <div class="meta">
@@ -168,7 +155,6 @@
 const piston  = document.getElementById('piston');
 const fill    = document.getElementById('fill');
 const volEl   = document.getElementById('vol');
-const pumpBtn = document.getElementById('pumpBtn');
 
 const TRAVEL = 90;          // px of vertical handle travel
 let handleTop = 0;          // current handle offset (0 = up, TRAVEL = down)
@@ -213,22 +199,16 @@ window.addEventListener('mouseup', () => {
   piston.style.transition = 'top 0.12s ease';
 });
 
-// ── PUMP button: one automatic stroke ──
-pumpBtn.addEventListener('click', () => {
-  vol += 9;
+// ── The leak: smooth continuous drain, worse the fuller it gets ──
+let lastT = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000);   // seconds, clamped
+  lastT = now;
+  vol -= (1.0 + vol * 0.15) * dt;                     // leak rate per second
   render();
-  piston.style.transition = 'top 0.1s ease';
-  setHandle(TRAVEL);
-  setTimeout(() => setHandle(0), 110);
-});
-
-// ── The leak: drains constantly, worse the fuller it gets ──
-setInterval(() => {
-  vol -= 0.4 + vol * 0.06;
-  render();
-}, 400);
-
-render();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
 </script>
 </body>
 </html>
