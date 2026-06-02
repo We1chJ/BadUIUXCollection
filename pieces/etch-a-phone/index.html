@@ -56,7 +56,9 @@
   .dial:active { cursor: grabbing; }
   .dial svg { width: 30px; height: 30px; }
 
-  .hint { font-size: 20px; color: #bdbdbd; padding-top: 6px; }
+  .side-panel { display: flex; flex-direction: column; gap: 16px; padding-top: 6px; }
+  .hint { font-size: 18px; color: #bdbdbd; }
+  .live-guess { font-size: 22px; color: #b0b0b0; font-style: italic; min-height: 1.6em; }
 
   /* ── Buttons ── */
   .btns { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
@@ -108,7 +110,10 @@
         </div>
       </div>
     </div>
-    <p class="hint">Click and rotate the dials!</p>
+    <div class="side-panel">
+      <p class="hint">Click and rotate the dials!</p>
+      <p class="live-guess" id="live-guess"></p>
+    </div>
   </div>
 
   <div class="btns">
@@ -133,15 +138,17 @@ const screen = document.getElementById('screen');
 const ctx = screen.getContext('2d', { willReadFrequently: true });
 const W = screen.width, H = screen.height;
 
+const guessEl = document.getElementById('live-guess');
+let lastGuessT = 0;
+
 function clearScreen() {
   ctx.fillStyle = '#d2d2d2';
   ctx.fillRect(0, 0, W, H);
   penX = W / 2; penY = H / 2;
-  ctx.beginPath();
-  ctx.moveTo(penX, penY);
-  // tiny starting dot
   ctx.fillStyle = '#444';
   ctx.fillRect(penX - 1, penY - 1, 2, 2);
+  guessEl.textContent = '';
+  lastGuessT = 0;
 }
 let penX, penY;
 function movePen(dx, dy) {
@@ -156,6 +163,12 @@ function movePen(dx, dy) {
   ctx.lineTo(nx, ny);
   ctx.stroke();
   penX = nx; penY = ny;
+  const now = performance.now();
+  if (now - lastGuessT > 120) {
+    lastGuessT = now;
+    const g = classify();
+    guessEl.textContent = g !== null ? `this looks like a ${g}` : '';
+  }
 }
 
 // ═══ Dials → pen movement (left=X, right=Y) ═════════════════════════════════
@@ -181,17 +194,17 @@ function bindDial(el, axis) {
 bindDial(document.getElementById('dialL'), 'x');
 bindDial(document.getElementById('dialR'), 'y');
 
-// ═══ Lightweight digit classifier (nearest font template, cosine sim) ═══════
-const G = 16;   // feature grid size
+// ═══ Digit classifier — multi-template cosine similarity ════════════════════
+const G = 28;  // 28×28 feature grid (MNIST-style resolution)
 
-// Extract a normalized GxG ink-vector from a canvas (ink = dark pixels).
+// Extract a normalized G×G ink-vector from a canvas (ink = dark pixels).
 function features(srcCanvas) {
   const c = srcCanvas.getContext('2d', { willReadFrequently: true });
   const { width: w, height: h } = srcCanvas;
   const data = c.getImageData(0, 0, w, h).data;
   let minx = w, miny = h, maxx = 0, maxy = 0, any = false;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (data[(y * w + x) * 4] < 128) {           // red channel dark → ink
+    if (data[(y * w + x) * 4] < 160) {
       any = true;
       if (x < minx) minx = x; if (x > maxx) maxx = x;
       if (y < miny) miny = y; if (y > maxy) maxy = y;
@@ -202,7 +215,7 @@ function features(srcCanvas) {
   const small = document.createElement('canvas'); small.width = small.height = G;
   const sx = small.getContext('2d', { willReadFrequently: true });
   sx.fillStyle = '#fff'; sx.fillRect(0, 0, G, G);
-  const scale = Math.min(G / bw, G / bh) * 0.84;
+  const scale = Math.min(G / bw, G / bh) * 0.82;
   const dw = bw * scale, dh = bh * scale;
   sx.drawImage(srcCanvas, minx, miny, bw, bh, (G - dw) / 2, (G - dh) / 2, dw, dh);
   const sd = sx.getImageData(0, 0, G, G).data;
@@ -214,18 +227,33 @@ function features(srcCanvas) {
   return vec;
 }
 
-// Build one template per digit by rendering it with a font.
+// Multiple template variants per digit.
+// Stroke-style templates are most similar to single-stroke Etch-a-Sketch drawings.
 const templates = (() => {
-  const tc = document.createElement('canvas'); tc.width = tc.height = 120;
+  const SIZE = 140;
+  const tc = document.createElement('canvas'); tc.width = tc.height = SIZE;
   const tx = tc.getContext('2d', { willReadFrequently: true });
-  const out = [];
-  for (let d = 0; d < 10; d++) {
-    tx.fillStyle = '#fff'; tx.fillRect(0, 0, 120, 120);
-    tx.fillStyle = '#000';
-    tx.font = 'bold 96px Arial, sans-serif';
-    tx.textAlign = 'center'; tx.textBaseline = 'middle';
-    tx.fillText(String(d), 60, 64);
-    out.push(features(tc));
+  const variants = [
+    { font: 'bold 110px Arial, sans-serif',            mode: 'stroke', lw: 6 },
+    { font: '110px Arial, sans-serif',                 mode: 'stroke', lw: 5 },
+    { font: 'bold 110px "Courier New", monospace',     mode: 'stroke', lw: 6 },
+    { font: 'bold 100px Arial, sans-serif',            mode: 'stroke', lw: 8 },
+    { font: 'bold 110px Arial, sans-serif',            mode: 'fill'         },
+    { font: 'bold 110px "Courier New", monospace',     mode: 'fill'         },
+  ];
+  const out = Array.from({ length: 10 }, () => []);
+  for (const { font, mode, lw } of variants) {
+    for (let d = 0; d < 10; d++) {
+      tx.fillStyle = '#fff'; tx.fillRect(0, 0, SIZE, SIZE);
+      tx.font = font; tx.textAlign = 'center'; tx.textBaseline = 'middle';
+      if (mode === 'stroke') {
+        tx.strokeStyle = '#000'; tx.lineWidth = lw; tx.strokeText(String(d), SIZE / 2, SIZE / 2 + 4);
+      } else {
+        tx.fillStyle = '#000'; tx.fillText(String(d), SIZE / 2, SIZE / 2 + 4);
+      }
+      const vec = features(tc);
+      if (vec) out[d].push(vec);
+    }
   }
   return out;
 })();
@@ -234,9 +262,13 @@ function classify() {
   const vec = features(screen);
   if (!vec) return null;
   let best = -1, score = -Infinity;
-  templates.forEach((t, d) => {
-    let s = 0; for (let k = 0; k < t.length; k++) s += t[k] * vec[k];
-    if (s > score) { score = s; best = d; }
+  templates.forEach((tArr, d) => {
+    let maxS = -Infinity;
+    for (const t of tArr) {
+      let s = 0; for (let k = 0; k < t.length; k++) s += t[k] * vec[k];
+      if (s > maxS) maxS = s;
+    }
+    if (maxS > score) { score = maxS; best = d; }
   });
   return best;
 }
