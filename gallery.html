@@ -298,7 +298,7 @@ function renderGrid(items) {
 
     card.innerHTML = `
       <div class="card-preview">
-        <iframe src="./pieces/${piece.id}/" scrolling="no" tabindex="-1" loading="lazy" title="${piece.title} preview"></iframe>
+        <iframe src="./pieces/${piece.id}/" scrolling="no" tabindex="-1" loading="lazy" sandbox="allow-same-origin" title="${piece.title} preview"></iframe>
       </div>
       <div class="card-info">
         <div class="card-title">${piece.title}</div>
