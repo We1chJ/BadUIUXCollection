@@ -222,12 +222,13 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="./pieces/registry.js"></script>
 <script>
 // ── Dither background (WebGL2) ────────────────────────────────────────────────
 (function () {
   const canvas = document.getElementById('dither-bg');
-  const gl = canvas.getContext('webgl2');
+  const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true });
   if (!gl) return;
 
   const VS = `#version 300 es
@@ -504,59 +505,17 @@ function resize() {
   dmgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-// Mirror the page layout onto an offscreen canvas so shards carry real content
+// Snapshot the actual rendered page (dither bg + text + buttons) so shards
+// carry the real HTML. Returns a Promise<canvas>.
 function buildSource() {
-  const src  = document.createElement('canvas');
-  src.width  = W * dpr; src.height = H * dpr;
-  const sctx = src.getContext('2d');
-  sctx.scale(dpr, dpr);
-
-  // Background
-  sctx.fillStyle = '#f9f9f9';
-  sctx.fillRect(0, 0, W, H);
-
-  // Title
-  const titleEl    = document.querySelector('.title');
-  const titleRect  = titleEl.getBoundingClientRect();
-  const titleSize  = parseFloat(getComputedStyle(titleEl).fontSize);
-  sctx.font        = `500 ${titleSize}px 'EB Garamond', serif`;
-  sctx.fillStyle   = '#000';
-  sctx.textAlign   = 'center';
-  sctx.textBaseline = 'middle';
-  sctx.fillText('BAD UI UX', titleRect.left + titleRect.width / 2, titleRect.top + titleRect.height / 2);
-
-  // Subtitle
-  const subEl   = document.querySelector('.subtitle');
-  const subRect = subEl.getBoundingClientRect();
-  sctx.font     = `400 11px 'Inter', sans-serif`;
-  sctx.fillStyle = 'rgba(170,170,170,1)';
-  sctx.fillText(subEl.textContent.toUpperCase(), subRect.left + subRect.width / 2, subRect.top + subRect.height / 2);
-
-  // Buttons
-  document.querySelectorAll('.btn').forEach(btn => {
-    const r = btn.getBoundingClientRect();
-    const filled = btn.classList.contains('filled');
-
-    // Shadow
-    sctx.fillStyle = '#000';
-    sctx.fillRect(r.left + 3, r.top + 3, r.width, r.height);
-
-    // Fill
-    sctx.fillStyle = filled ? '#000' : '#fff';
-    sctx.fillRect(r.left, r.top, r.width, r.height);
-
-    // Border
-    sctx.strokeStyle = '#000'; sctx.lineWidth = 2;
-    sctx.strokeRect(r.left + 1, r.top + 1, r.width - 2, r.height - 2);
-
-    // Label
-    sctx.font = `600 13px 'Inter', sans-serif`;
-    sctx.fillStyle = filled ? '#fff' : '#000';
-    sctx.textAlign = 'center'; sctx.textBaseline = 'middle';
-    sctx.fillText(btn.textContent.trim().toUpperCase(), r.left + r.width / 2, r.top + r.height / 2);
+  return html2canvas(document.body, {
+    backgroundColor: '#000',
+    scale: dpr,
+    logging: false,
+    ignoreElements: el =>
+      el.id === 'damage' || el.id === 'shatter' ||
+      el.id === 'target-cursor' || el.id === 'coords' || el.id === 'piece-count',
   });
-
-  return src;
 }
 
 // Brick-grid explosion local to a click point
@@ -698,8 +657,12 @@ document.addEventListener('click', e => {
 // ── Boot ─────────────────────────────────────────────────────────────────────
 resize();
 document.fonts.ready.then(() => {
-  // Small delay so CSS layout is fully painted before we measure
-  setTimeout(() => { sourceCanvas = buildSource(); }, 120);
+  // Delay so the dither has rendered a frame and layout is fully painted
+  setTimeout(() => { buildSource().then(c => { sourceCanvas = c; }); }, 400);
+});
+// Re-snapshot on resize so shards stay aligned with the current layout
+window.addEventListener('resize', () => {
+  setTimeout(() => { buildSource().then(c => { sourceCanvas = c; }); }, 400);
 });
 </script>
 </body>
