@@ -31,6 +31,8 @@ Bad design here is **intentional and crafted**. When building a piece:
 
 Copy the template verbatim for the chrome (back button + pill CSS + pill HTML + magnet JS), place the bad UI directly in `<body>`. Do not omit or redesign any of these structural elements.
 
+**Do not modify `pieces/_template/index.html` unless explicitly told to.**
+
 ## Tech Stack & Structure
 
 No stack is prescribed — each piece can be standalone HTML/CSS/JS, a React component, a Svelte app, etc. Organize by directory, one subdirectory per piece. Each should be self-contained and openable in a browser or run locally without setup.
