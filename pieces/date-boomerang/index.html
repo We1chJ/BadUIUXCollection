@@ -35,10 +35,10 @@
   }
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
-    width: 22px; height: 22px; border-radius: 50%; background: #3b6cf6; border: none;
+    width: 22px; height: 22px; border-radius: 50%; background: #c2c2c2; border: none;
   }
   input[type=range]::-moz-range-thumb {
-    width: 22px; height: 22px; border-radius: 50%; background: #3b6cf6; border: none;
+    width: 22px; height: 22px; border-radius: 50%; background: #c2c2c2; border: none;
   }
 
   .date { font-family: 'Courier New', monospace; font-size: 22px; color: #444; white-space: nowrap; min-width: 130px; }
@@ -112,8 +112,8 @@ const statusEl = document.getElementById('status');
 const speedEl = document.getElementById('speed');
 const DAY = 86400000;
 
-// Range: 1900-01-01 → today, mapped onto the 0..100 slider.
-const minDay = Math.floor(Date.UTC(1900, 0, 1) / DAY);
+// Range: 1970-01-01 → today, mapped onto the 0..100 slider.
+const minDay = Math.floor(Date.UTC(1970, 0, 1) / DAY);
 const maxDay = Math.floor(Date.now() / DAY);
 
 function dayForPos(p) {
@@ -128,7 +128,7 @@ function fmt(day) {
 }
 function render() {
   const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-  slider.style.background = `linear-gradient(to right, #3b6cf6 ${pct}%, #e6e6e6 ${pct}%)`;
+  slider.style.background = `linear-gradient(to right, #c2c2c2 ${pct}%, #e6e6e6 ${pct}%)`;
   dateEl.textContent = fmt(dayForPos(Number(slider.value)));
 }
 

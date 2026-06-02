@@ -73,8 +73,6 @@
 
   .readout { font-size: 24px; color: #333; margin-bottom: 22px; }
   .readout .ph { font-variant-numeric: tabular-nums; }
-  .reddit { font-size: 17px; }
-  .reddit a { color: #2d6cdf; }
 
   .meta {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -121,7 +119,6 @@
 
   <p class="readout">You're number is <span class="ph" id="ph">+1 (___) ____</span></p>
 
-  <p class="reddit"><a href="https://www.reddit.com/search/?q=etch%20a%20sketch%20phone%20input" target="_blank" rel="noopener">Reddit: An Etch-a-Sketch OCR phone input, bring out your best picasso!</a></p>
 </div>
 
 <div class="meta">
@@ -167,8 +164,8 @@ function bindDial(el, axis) {
   let dragging = false, lastA = 0, rot = 0;
   const center = () => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
   const ang = e => { const c = center(); return Math.atan2(e.clientY - c.y, e.clientX - c.x); };
-  el.addEventListener('pointerdown', e => { dragging = true; lastA = ang(e); el.setPointerCapture(e.pointerId); e.preventDefault(); });
-  el.addEventListener('pointermove', e => {
+  el.addEventListener('pointerdown', e => { dragging = true; lastA = ang(e); e.preventDefault(); });
+  document.addEventListener('pointermove', e => {
     if (!dragging) return;
     let a = ang(e), d = a - lastA;
     if (d >  Math.PI) d -= 2 * Math.PI;
@@ -178,8 +175,8 @@ function bindDial(el, axis) {
     if (axis === 'x') movePen(d * SENS, 0);
     else              movePen(0, d * SENS);
   });
-  el.addEventListener('pointerup',     () => dragging = false);
-  el.addEventListener('pointercancel', () => dragging = false);
+  document.addEventListener('pointerup',     () => { dragging = false; });
+  document.addEventListener('pointercancel', () => { dragging = false; });
 }
 bindDial(document.getElementById('dialL'), 'x');
 bindDial(document.getElementById('dialR'), 'y');
