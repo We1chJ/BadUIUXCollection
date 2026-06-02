@@ -519,7 +519,6 @@ function buildSource() {
 }
 
 // Star-burst impact of varied rectangles local to a click point.
-// Returns { rects, R } — R is the randomized impact radius for shading.
 function buildShards(clickX, clickY) {
   const R       = 38 + Math.random() * 34;          // randomized impact size
   const spikes  = 5 + (Math.random() * 3 | 0);       // star points (5-7)
@@ -534,9 +533,9 @@ function buildShards(clickX, clickY) {
 
   // Non-uniform column/row edges → rectangles of varied dimensions, no gaps
   const xs = [0];
-  while (xs[xs.length - 1] < span) xs.push(xs[xs.length - 1] + 16 + Math.random() * 34);
+  while (xs[xs.length - 1] < span) xs.push(xs[xs.length - 1] + 30 + Math.random() * 50);
   const ys = [0];
-  while (ys[ys.length - 1] < span) ys.push(ys[ys.length - 1] + 13 + Math.random() * 26);
+  while (ys[ys.length - 1] < span) ys.push(ys[ys.length - 1] + 26 + Math.random() * 42);
 
   const rects = [];
   for (let r = 0; r < ys.length - 1; r++) {
@@ -552,28 +551,25 @@ function buildShards(clickX, clickY) {
       ]);
     }
   }
-  return { rects, R };
+  return rects;
 }
 
 function spawnShatter(clickX, clickY) {
   if (!sourceCanvas) return;
-  const { rects, R } = buildShards(clickX, clickY);
+  const rects = buildShards(clickX, clickY);
   rects.forEach(verts => {
     const cx  = verts.reduce((s, v) => s + v.x, 0) / verts.length;
     const cy  = verts.reduce((s, v) => s + v.y, 0) / verts.length;
 
-    // Paint a dented gray surface on the damage canvas: lighter toward the
-    // impact center (catches light like a pressed dent / warp).
-    const t     = Math.min(1, Math.hypot(cx - clickX, cy - clickY) / R);
-    const shade = Math.round(205 - t * 55);          // 205 center → 150 edge
+    // Paint the impact black on the damage canvas (persistent wall hole)
     dmgCtx.beginPath();
     dmgCtx.moveTo(verts[0].x, verts[0].y);
     for (let i = 1; i < verts.length; i++) dmgCtx.lineTo(verts[i].x, verts[i].y);
     dmgCtx.closePath();
-    dmgCtx.fillStyle = `rgba(${shade}, ${shade}, ${shade + 4}, 0.9)`;
+    dmgCtx.fillStyle = '#0a0a0a';
     dmgCtx.fill();
-    dmgCtx.strokeStyle = 'rgba(255,255,255,0.12)';
-    dmgCtx.lineWidth   = 0.6;
+    dmgCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+    dmgCtx.lineWidth   = 0.75;
     dmgCtx.stroke();
 
     // Pieces only "slightly shatter out" — gentle outward pop, then gravity
