@@ -551,51 +551,12 @@ function buildShards(clickX, clickY) {
       ]);
     }
   }
-  return { rects, edgeR };
-}
-
-// Trace an irregular closed ring at `scale` × the impact outline.
-function ringPath(ctx, cx, cy, scale, shape, steps) {
-  for (let k = 0; k <= steps; k++) {
-    const a  = (k / steps) * Math.PI * 2;
-    const rr = shape(a) * scale;
-    const x  = cx + Math.cos(a) * rr;
-    const y  = cy + Math.sin(a) * rr;
-    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-}
-
-// Bake a lens warp of the page snapshot around the impact onto the damage
-// canvas. Rings follow the irregular star-burst outline (plus organic noise),
-// so the distortion hugs the broken shape instead of a clean circle.
-function warpImpact(clickX, clickY, edgeR) {
-  const bands = 8, steps = 44;
-  const pA = Math.random() * 6.283, pB = Math.random() * 6.283;
-  // irregular outline = star edge × organic harmonics
-  const shape = a => edgeR(a) * (1 + 0.16 * Math.sin(a * 3 + pA) + 0.10 * Math.sin(a * 5 + pB));
-  const sIn = 0.5, sOut = 1.8;   // from inside the hole to a bit beyond
-  for (let i = bands - 1; i >= 0; i--) {
-    const f0 = i / bands, f1 = (i + 1) / bands;
-    const innerS = sIn + (sOut - sIn) * f0;
-    const outerS = sIn + (sOut - sIn) * f1;
-    const m = 1 + 0.28 * (1 - f1) * (1 - f1);   // strongest near hole → 1 at edge
-    dmgCtx.save();
-    dmgCtx.beginPath();
-    ringPath(dmgCtx, clickX, clickY, outerS, shape, steps);
-    ringPath(dmgCtx, clickX, clickY, innerS, shape, steps);
-    dmgCtx.clip('evenodd');
-    dmgCtx.translate(clickX, clickY);
-    dmgCtx.scale(m, m);
-    dmgCtx.translate(-clickX, -clickY);
-    dmgCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, W, H);
-    dmgCtx.restore();
-  }
+  return rects;
 }
 
 function spawnShatter(clickX, clickY) {
   if (!sourceCanvas) return;
-  const { rects, edgeR } = buildShards(clickX, clickY);
-  warpImpact(clickX, clickY, edgeR);   // distort the surrounding area first
+  const rects = buildShards(clickX, clickY);
   rects.forEach(verts => {
     const cx  = verts.reduce((s, v) => s + v.x, 0) / verts.length;
     const cy  = verts.reduce((s, v) => s + v.y, 0) / verts.length;
