@@ -518,64 +518,75 @@ function buildSource() {
   });
 }
 
-// Brick-grid explosion local to a click point
+// Star-burst impact of varied rectangles local to a click point.
+// Returns { rects, R } — R is the randomized impact radius for shading.
 function buildShards(clickX, clickY) {
-  const R  = 55;   // blast radius
-  const BW = 48;   // brick width
-  const BH = 24;   // brick height
-  const cols = Math.ceil(R * 2 / BW) + 2;
-  const rows = Math.ceil(R * 2 / BH) + 2;
-  const ox   = clickX - (cols / 2) * BW;
-  const oy   = clickY - (rows / 2) * BH;
-  const bricks = [];
+  const R       = 38 + Math.random() * 34;          // randomized impact size
+  const spikes  = 5 + (Math.random() * 3 | 0);       // star points (5-7)
+  const phase   = Math.random() * Math.PI * 2;
+  const starAmp = 0.28 + Math.random() * 0.16;       // jaggedness of the star edge
+  // jagged star radius at a given angle
+  const edgeR = a => R * (1 - starAmp + starAmp * (0.5 + 0.5 * Math.cos((a + phase) * spikes)));
 
-  for (let r = 0; r < rows; r++) {
-    const offset = (r % 2) * (BW / 2);   // running-bond offset
-    for (let c = 0; c < cols; c++) {
-      const x  = ox + c * BW + offset;
-      const y  = oy + r * BH;
-      const cx = x + BW / 2;
-      const cy = y + BH / 2;
-      if (Math.hypot(cx - clickX, cy - clickY) > R) continue;
-      // No jitter — bricks tile edge-to-edge with no gaps
-      bricks.push([
-        { x: x,       y: y       },
-        { x: x + BW,  y: y       },
-        { x: x + BW,  y: y + BH  },
-        { x: x,       y: y + BH  },
+  const span = R * 2.6;
+  const ox = clickX - span / 2;
+  const oy = clickY - span / 2;
+
+  // Non-uniform column/row edges → rectangles of varied dimensions, no gaps
+  const xs = [0];
+  while (xs[xs.length - 1] < span) xs.push(xs[xs.length - 1] + 16 + Math.random() * 34);
+  const ys = [0];
+  while (ys[ys.length - 1] < span) ys.push(ys[ys.length - 1] + 13 + Math.random() * 26);
+
+  const rects = [];
+  for (let r = 0; r < ys.length - 1; r++) {
+    for (let c = 0; c < xs.length - 1; c++) {
+      const x0 = ox + xs[c], x1 = ox + xs[c + 1];
+      const y0 = oy + ys[r], y1 = oy + ys[r + 1];
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      const ang = Math.atan2(cy - clickY, cx - clickX);
+      if (Math.hypot(cx - clickX, cy - clickY) > edgeR(ang)) continue;
+      rects.push([
+        { x: x0, y: y0 }, { x: x1, y: y0 },
+        { x: x1, y: y1 }, { x: x0, y: y1 },
       ]);
     }
   }
-  return bricks;
+  return { rects, R };
 }
 
 function spawnShatter(clickX, clickY) {
   if (!sourceCanvas) return;
-  const tris = buildShards(clickX, clickY);
-  tris.forEach(verts => {
+  const { rects, R } = buildShards(clickX, clickY);
+  rects.forEach(verts => {
     const cx  = verts.reduce((s, v) => s + v.x, 0) / verts.length;
     const cy  = verts.reduce((s, v) => s + v.y, 0) / verts.length;
 
-    // Paint this brick permanently black on the damage canvas
+    // Paint a dented gray surface on the damage canvas: lighter toward the
+    // impact center (catches light like a pressed dent / warp).
+    const t     = Math.min(1, Math.hypot(cx - clickX, cy - clickY) / R);
+    const shade = Math.round(205 - t * 55);          // 205 center → 150 edge
     dmgCtx.beginPath();
     dmgCtx.moveTo(verts[0].x, verts[0].y);
     for (let i = 1; i < verts.length; i++) dmgCtx.lineTo(verts[i].x, verts[i].y);
     dmgCtx.closePath();
-    dmgCtx.fillStyle = '#0a0a0a';
+    dmgCtx.fillStyle = `rgba(${shade}, ${shade}, ${shade + 4}, 0.9)`;
     dmgCtx.fill();
-    dmgCtx.strokeStyle = 'rgba(255,255,255,0.18)';
-    dmgCtx.lineWidth   = 0.75;
+    dmgCtx.strokeStyle = 'rgba(255,255,255,0.12)';
+    dmgCtx.lineWidth   = 0.6;
     dmgCtx.stroke();
-    const ang = Math.atan2(cy - clickY, cx - clickX);
+
+    // Pieces only "slightly shatter out" — gentle outward pop, then gravity
+    const ang  = Math.atan2(cy - clickY, cx - clickX);
     const dist = Math.hypot(cy - clickY, cx - clickX) + 1;
-    const spd  = 2 + Math.random() * 8 + Math.min(80 / dist, 10);
+    const spd  = 1 + Math.random() * 4 + Math.min(40 / dist, 5);
     shards.push({
       verts, cx, cy,
       dx: 0, dy: 0,
-      vx: Math.cos(ang) * spd * (0.5 + Math.random() * 0.8),
-      vy: Math.sin(ang) * spd * (0.5 + Math.random() * 0.8) - Math.random() * 2,
+      vx: Math.cos(ang) * spd * (0.4 + Math.random() * 0.7),
+      vy: Math.sin(ang) * spd * (0.4 + Math.random() * 0.7) - Math.random() * 1.5,
       rot: 0,
-      rotV: (Math.random() - 0.5) * 0.09,
+      rotV: (Math.random() - 0.5) * 0.06,
     });
   });
 }
