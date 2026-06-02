@@ -25,11 +25,11 @@ Bad design here is **intentional and crafted**. When building a piece:
 **Every new piece `index.html` must follow the structure in `pieces/_template/index.html`.** No exceptions. That means:
 
 1. **Back button** (top-left, fixed) — `<a class="back" href="../../gallery.html">← Gallery</a>` with the exact CSS from the template.
-2. **Stage wrapper** — `<div class="stage">` centered with `min-height: 100vh` and `padding: 80px 24px` so the bad UI has breathing room.
-3. **Glass footer pill** (`#footer-bar`, bottom-center, fixed) — the frosted-glass floating pill with the piece title, a separator, the UX sin (italic), a separator, and the GitHub icon link. Copy the CSS and magnet-effect JS verbatim from the template; only swap in the piece-specific strings.
+2. **Body as centering container** — `body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }`. No `.stage` wrapper. Drop the bad UI directly in `<body>`.
+3. **Glass footer pill** (`#footer-bar`, bottom-center, fixed) — frosted-glass floating pill with piece title, separator, UX sin (italic), separator, GitHub icon link. Copy the CSS and magnet-effect JS verbatim from the template; only swap in the piece-specific strings.
 4. **Title tag** — `<title>Piece Name — BAD UI UX</title>`.
 
-Copy the template verbatim for the chrome (back button + pill CSS + pill HTML + magnet JS), then put the bad UI inside `.stage`. Do not omit or redesign any of these structural elements.
+Copy the template verbatim for the chrome (back button + pill CSS + pill HTML + magnet JS), place the bad UI directly in `<body>`. Do not omit or redesign any of these structural elements.
 
 ## Tech Stack & Structure
 
