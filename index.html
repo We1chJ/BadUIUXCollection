@@ -335,57 +335,50 @@ function buildSource() {
   return src;
 }
 
-// Jittered-grid triangulation local to a click point
+// Brick-grid explosion local to a click point
 function buildShards(clickX, clickY) {
-  const R    = 42;
-  const grid = 10;
-  const cols = Math.ceil(R * 2 / grid) + 2;
-  const rows = Math.ceil(R * 2 / grid) + 2;
-  const ox   = clickX - (cols / 2) * grid;
-  const oy   = clickY - (rows / 2) * grid;
-  const jit  = grid * 0.65;
-  const pts  = [];
+  const R  = 90;   // blast radius
+  const BW = 48;   // brick width
+  const BH = 24;   // brick height
+  const cols = Math.ceil(R * 2 / BW) + 2;
+  const rows = Math.ceil(R * 2 / BH) + 2;
+  const ox   = clickX - (cols / 2) * BW;
+  const oy   = clickY - (rows / 2) * BH;
+  const bricks = [];
 
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      pts.push({
-        x: ox + c * grid + (Math.random() - 0.5) * jit,
-        y: oy + r * grid + (Math.random() - 0.5) * jit,
-      });
-
-  // Force-include the click point
-  pts.push({ x: clickX + (Math.random() - 0.5) * 4, y: clickY + (Math.random() - 0.5) * 4 });
-
-  const tris = [];
-  for (let r = 0; r < rows - 1; r++) {
-    for (let c = 0; c < cols - 1; c++) {
-      const tl = pts[r * cols + c], tr = pts[r * cols + c + 1];
-      const bl = pts[(r + 1) * cols + c], br = pts[(r + 1) * cols + c + 1];
-      const pairs = Math.random() > 0.5
-        ? [[tl, tr, bl], [tr, br, bl]]
-        : [[tl, tr, br], [tl, br, bl]];
-      pairs.forEach(v => {
-        const cx = (v[0].x + v[1].x + v[2].x) / 3;
-        const cy = (v[0].y + v[1].y + v[2].y) / 3;
-        if (Math.hypot(cx - clickX, cy - clickY) < R) tris.push(v);
-      });
+  for (let r = 0; r < rows; r++) {
+    const offset = (r % 2) * (BW / 2);   // running-bond offset
+    for (let c = 0; c < cols; c++) {
+      const x  = ox + c * BW + offset;
+      const y  = oy + r * BH;
+      const cx = x + BW / 2;
+      const cy = y + BH / 2;
+      if (Math.hypot(cx - clickX, cy - clickY) > R) continue;
+      // Slight random size jitter so bricks don't look perfectly uniform
+      const jx = (Math.random() - 0.5) * 4;
+      const jy = (Math.random() - 0.5) * 2;
+      bricks.push([
+        { x: x + jx,       y: y + jy       },
+        { x: x + BW + jx,  y: y + jy       },
+        { x: x + BW + jx,  y: y + BH + jy  },
+        { x: x + jx,       y: y + BH + jy  },
+      ]);
     }
   }
-  return tris;
+  return bricks;
 }
 
 function spawnShatter(clickX, clickY) {
   if (!sourceCanvas) return;
   const tris = buildShards(clickX, clickY);
   tris.forEach(verts => {
-    const cx  = (verts[0].x + verts[1].x + verts[2].x) / 3;
-    const cy  = (verts[0].y + verts[1].y + verts[2].y) / 3;
+    const cx  = verts.reduce((s, v) => s + v.x, 0) / verts.length;
+    const cy  = verts.reduce((s, v) => s + v.y, 0) / verts.length;
 
-    // Paint this triangle permanently black on the damage canvas
+    // Paint this brick permanently black on the damage canvas
     dmgCtx.beginPath();
     dmgCtx.moveTo(verts[0].x, verts[0].y);
-    dmgCtx.lineTo(verts[1].x, verts[1].y);
-    dmgCtx.lineTo(verts[2].x, verts[2].y);
+    for (let i = 1; i < verts.length; i++) dmgCtx.lineTo(verts[i].x, verts[i].y);
     dmgCtx.closePath();
     dmgCtx.fillStyle = '#0a0a0a';
     dmgCtx.fill();
@@ -415,8 +408,7 @@ function drawShard(s) {
 
   ctx.beginPath();
   ctx.moveTo(s.verts[0].x, s.verts[0].y);
-  ctx.lineTo(s.verts[1].x, s.verts[1].y);
-  ctx.lineTo(s.verts[2].x, s.verts[2].y);
+  for (let i = 1; i < s.verts.length; i++) ctx.lineTo(s.verts[i].x, s.verts[i].y);
   ctx.closePath();
   ctx.clip();
 
@@ -440,8 +432,7 @@ function settleShard(s) {
   dmgCtx.translate(-s.cx, -s.cy);
   dmgCtx.beginPath();
   dmgCtx.moveTo(s.verts[0].x, s.verts[0].y);
-  dmgCtx.lineTo(s.verts[1].x, s.verts[1].y);
-  dmgCtx.lineTo(s.verts[2].x, s.verts[2].y);
+  for (let i = 1; i < s.verts.length; i++) dmgCtx.lineTo(s.verts[i].x, s.verts[i].y);
   dmgCtx.closePath();
   dmgCtx.clip();
   dmgCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, W, H);
