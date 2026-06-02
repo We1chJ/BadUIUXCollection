@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Date Boomerang — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif; background: #fff; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; color: #333; user-select: none;
+  }
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  .card { width: 640px; max-width: 90vw; padding: 24px; }
+  h1 { font-size: 44px; font-weight: 500; color: #222; margin-bottom: 26px; }
+  .sub { font-size: 22px; color: #333; margin-bottom: 42px; }
+  .label { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 18px; }
+
+  .row { display: flex; align-items: center; gap: 24px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 6px; border-radius: 999px; background: #e6e6e6;
+    outline: none; pointer-events: none;   /* you don't control the boomerang */
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%; background: #3b6cf6; border: none;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%; background: #3b6cf6; border: none;
+  }
+
+  .date { font-family: 'Courier New', monospace; font-size: 22px; color: #444; white-space: nowrap; min-width: 130px; }
+  .status { font-size: 24px; color: #333; margin: 36px 0; }
+
+  .controls { display: flex; align-items: center; gap: 18px; }
+  .pick-btn {
+    font-family: Inter, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
+    color: #fff; background: #59b6e6; border: none; padding: 16px 40px; border-radius: 4px;
+    cursor: pointer; transition: background 0.12s, transform 0.06s;
+  }
+  .pick-btn:hover { background: #46a8db; }
+  .pick-btn:active { transform: translateY(1px); }
+  .speed {
+    font-family: Inter, sans-serif; font-size: 18px; color: #333;
+    padding: 14px 18px; border: 1px solid #59b6e6; border-radius: 6px;
+    background: #fff; cursor: pointer; min-width: 180px;
+  }
+
+  .meta {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 2px solid #000; background: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; font-size: 12px; gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; border: 2px solid #000; padding: 2px 8px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="card">
+  <h1>Date Boomerang</h1>
+  <p class="sub">Catch your birthday if you can.</p>
+
+  <p class="label">Birthday</p>
+  <div class="row">
+    <input type="range" id="slider" min="0" max="100" step="0.01" value="0"/>
+    <span class="date" id="date">0000-00-00</span>
+  </div>
+
+  <p class="status" id="status">You haven't caught a date yet.</p>
+
+  <div class="controls">
+    <button class="pick-btn" id="pick">Pick</button>
+    <select class="speed" id="speed">
+      <option value="220">Super Fast</option>
+      <option value="120">Fast</option>
+      <option value="60">Medium</option>
+      <option value="25">Slow</option>
+    </select>
+  </div>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Date Boomerang</span>
+  <span class="meta-sin">UX sin: the date handle never holds still — bounces end to end while you scramble to catch it</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
+<script>
+const slider = document.getElementById('slider');
+const dateEl = document.getElementById('date');
+const statusEl = document.getElementById('status');
+const speedEl = document.getElementById('speed');
+const DAY = 86400000;
+
+// Range: 1900-01-01 → today, mapped onto the 0..100 slider.
+const minDay = Math.floor(Date.UTC(1900, 0, 1) / DAY);
+const maxDay = Math.floor(Date.now() / DAY);
+
+function dayForPos(p) {
+  return Math.round(minDay + (p - 0) / 100 * (maxDay - minDay));
+}
+function fmt(day) {
+  const d = new Date(day * DAY);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+function render() {
+  const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.background = `linear-gradient(to right, #3b6cf6 ${pct}%, #e6e6e6 ${pct}%)`;
+  dateEl.textContent = fmt(dayForPos(Number(slider.value)));
+}
+
+// Boomerang: bounce back and forth across the track forever.
+const MIN = Number(slider.min), MAX = Number(slider.max);
+let pos = 0, dir = 1, lastT = performance.now();
+function bounce(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  const speed = Number(speedEl.value);
+  pos += dir * speed * dt;
+  if (pos >= MAX) { pos = MAX; dir = -1; }
+  if (pos <= MIN) { pos = MIN; dir =  1; }
+  slider.value = pos;
+  render();
+  requestAnimationFrame(bounce);
+}
+requestAnimationFrame(bounce);
+
+document.getElementById('pick').addEventListener('click', () => {
+  statusEl.textContent = `You caught ${fmt(dayForPos(Number(slider.value)))}`;
+});
+
+render();
+</script>
+</body>
+</html>

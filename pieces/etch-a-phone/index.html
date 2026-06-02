@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Etch-a-Phone — BAD UI UX</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    user-select: none;
+  }
+
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  .card { width: 680px; max-width: 92vw; padding: 24px; }
+  h1 { font-size: 42px; font-weight: 500; color: #222; margin-bottom: 24px; }
+  .sub { font-size: 20px; color: #333; margin-bottom: 30px; }
+
+  .rig { display: flex; align-items: flex-start; gap: 28px; margin-bottom: 28px; }
+
+  /* ── Etch-a-Sketch device ── */
+  .etch {
+    width: 320px; background: #ee3322; border-radius: 18px;
+    padding: 18px 18px 12px; flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  }
+  .screen {
+    display: block; width: 284px; height: 268px;
+    background: #d2d2d2; border-radius: 10px;
+    box-shadow: inset 0 0 14px rgba(0,0,0,0.18);
+  }
+  .dials { display: flex; justify-content: space-between; padding: 12px 6px 2px; }
+  .dial {
+    width: 62px; height: 62px; border-radius: 50%; cursor: grab;
+    background: radial-gradient(circle at 38% 32%, #fff, #d8d8d8 70%, #bdbdbd);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(238,51,34,0.55);
+  }
+  .dial:active { cursor: grabbing; }
+  .dial svg { width: 30px; height: 30px; }
+
+  .hint { font-size: 20px; color: #bdbdbd; padding-top: 6px; }
+
+  /* ── Buttons ── */
+  .btns { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
+  .b {
+    font-family: Inter, sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+    padding: 16px 26px; border-radius: 4px; transition: background 0.12s, transform 0.06s;
+  }
+  .b:active { transform: translateY(1px); }
+  .b.primary { color: #fff; background: #59b6e6; border: none; }
+  .b.primary:hover { background: #46a8db; }
+  .b.ghost { color: #444; background: #fff; border: 1px solid #cfcfcf; }
+  .b.ghost:hover { background: #f3f3f3; }
+
+  .readout { font-size: 24px; color: #333; margin-bottom: 22px; }
+  .readout .ph { font-variant-numeric: tabular-nums; }
+  .reddit { font-size: 17px; }
+  .reddit a { color: #2d6cdf; }
+
+  .meta {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 2px solid #000; background: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; font-size: 12px; gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; border: 2px solid #000; padding: 2px 8px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="card">
+  <h1>Etch-a-Phone</h1>
+  <p class="sub">Etch your number with OCR!</p>
+
+  <div class="rig">
+    <div class="etch">
+      <canvas class="screen" id="screen" width="284" height="268"></canvas>
+      <div class="dials">
+        <div class="dial" id="dialL" title="moves horizontally">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
+        </div>
+        <div class="dial" id="dialR" title="moves vertically">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 4 21 9 16 9"/></svg>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Click and rotate the dials!</p>
+  </div>
+
+  <div class="btns">
+    <button class="b primary" id="submit">Submit Etch</button>
+    <button class="b ghost" id="clear">Clear Etch</button>
+    <button class="b ghost" id="back">Backspace</button>
+  </div>
+
+  <p class="readout">You're number is <span class="ph" id="ph">+1 (___) ____</span></p>
+
+  <p class="reddit"><a href="https://www.reddit.com/search/?q=etch%20a%20sketch%20phone%20input" target="_blank" rel="noopener">Reddit: An Etch-a-Sketch OCR phone input, bring out your best picasso!</a></p>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Etch-a-Phone</span>
+  <span class="meta-sin">UX sin: gating a text field behind one-line handwriting OCR</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
+<script>
+// ═══ Etch-a-Sketch screen ═══════════════════════════════════════════════════
+const screen = document.getElementById('screen');
+const ctx = screen.getContext('2d', { willReadFrequently: true });
+const W = screen.width, H = screen.height;
+
+function clearScreen() {
+  ctx.fillStyle = '#d2d2d2';
+  ctx.fillRect(0, 0, W, H);
+  penX = W / 2; penY = H / 2;
+  ctx.beginPath();
+  ctx.moveTo(penX, penY);
+  // tiny starting dot
+  ctx.fillStyle = '#444';
+  ctx.fillRect(penX - 1, penY - 1, 2, 2);
+}
+let penX, penY;
+function movePen(dx, dy) {
+  const nx = Math.max(4, Math.min(W - 4, penX + dx));
+  const ny = Math.max(4, Math.min(H - 4, penY + dy));
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(penX, penY);
+  ctx.lineTo(nx, ny);
+  ctx.stroke();
+  penX = nx; penY = ny;
+}
+
+// ═══ Dials → pen movement (left=X, right=Y) ═════════════════════════════════
+const SENS = 48;   // px per radian
+function bindDial(el, axis) {
+  let dragging = false, lastA = 0, rot = 0;
+  const center = () => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  const ang = e => { const c = center(); return Math.atan2(e.clientY - c.y, e.clientX - c.x); };
+  el.addEventListener('pointerdown', e => { dragging = true; lastA = ang(e); el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    let a = ang(e), d = a - lastA;
+    if (d >  Math.PI) d -= 2 * Math.PI;
+    if (d < -Math.PI) d += 2 * Math.PI;
+    lastA = a; rot += d;
+    el.style.transform = `rotate(${rot}rad)`;
+    if (axis === 'x') movePen(d * SENS, 0);
+    else              movePen(0, d * SENS);
+  });
+  el.addEventListener('pointerup',     () => dragging = false);
+  el.addEventListener('pointercancel', () => dragging = false);
+}
+bindDial(document.getElementById('dialL'), 'x');
+bindDial(document.getElementById('dialR'), 'y');
+
+// ═══ Lightweight digit classifier (nearest font template, cosine sim) ═══════
+const G = 16;   // feature grid size
+
+// Extract a normalized GxG ink-vector from a canvas (ink = dark pixels).
+function features(srcCanvas) {
+  const c = srcCanvas.getContext('2d', { willReadFrequently: true });
+  const { width: w, height: h } = srcCanvas;
+  const data = c.getImageData(0, 0, w, h).data;
+  let minx = w, miny = h, maxx = 0, maxy = 0, any = false;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (data[(y * w + x) * 4] < 128) {           // red channel dark → ink
+      any = true;
+      if (x < minx) minx = x; if (x > maxx) maxx = x;
+      if (y < miny) miny = y; if (y > maxy) maxy = y;
+    }
+  }
+  if (!any) return null;
+  const bw = maxx - minx + 1, bh = maxy - miny + 1;
+  const small = document.createElement('canvas'); small.width = small.height = G;
+  const sx = small.getContext('2d', { willReadFrequently: true });
+  sx.fillStyle = '#fff'; sx.fillRect(0, 0, G, G);
+  const scale = Math.min(G / bw, G / bh) * 0.84;
+  const dw = bw * scale, dh = bh * scale;
+  sx.drawImage(srcCanvas, minx, miny, bw, bh, (G - dw) / 2, (G - dh) / 2, dw, dh);
+  const sd = sx.getImageData(0, 0, G, G).data;
+  const vec = new Float32Array(G * G);
+  let norm = 0;
+  for (let k = 0; k < G * G; k++) { const ink = 1 - sd[k * 4] / 255; vec[k] = ink; norm += ink * ink; }
+  norm = Math.sqrt(norm) || 1;
+  for (let k = 0; k < vec.length; k++) vec[k] /= norm;
+  return vec;
+}
+
+// Build one template per digit by rendering it with a font.
+const templates = (() => {
+  const tc = document.createElement('canvas'); tc.width = tc.height = 120;
+  const tx = tc.getContext('2d', { willReadFrequently: true });
+  const out = [];
+  for (let d = 0; d < 10; d++) {
+    tx.fillStyle = '#fff'; tx.fillRect(0, 0, 120, 120);
+    tx.fillStyle = '#000';
+    tx.font = 'bold 96px Arial, sans-serif';
+    tx.textAlign = 'center'; tx.textBaseline = 'middle';
+    tx.fillText(String(d), 60, 64);
+    out.push(features(tc));
+  }
+  return out;
+})();
+
+function classify() {
+  const vec = features(screen);
+  if (!vec) return null;
+  let best = -1, score = -Infinity;
+  templates.forEach((t, d) => {
+    let s = 0; for (let k = 0; k < t.length; k++) s += t[k] * vec[k];
+    if (s > score) { score = s; best = d; }
+  });
+  return best;
+}
+
+// ═══ Phone number assembly ══════════════════════════════════════════════════
+let digitsArr = [];
+const MAXD = 7;   // (3) + 4, matching the display
+const phEl = document.getElementById('ph');
+function renderPhone() {
+  const d = digitsArr.slice();
+  const area = (d.slice(0, 3).join('') + '___').slice(0, 3);
+  const line = (d.slice(3, 7).join('') + '____').slice(0, 4);
+  phEl.textContent = `+1 (${area}) ${line}`;
+}
+
+document.getElementById('submit').addEventListener('click', () => {
+  if (digitsArr.length >= MAXD) { clearScreen(); return; }
+  const d = classify();
+  if (d === null) return;          // nothing drawn
+  digitsArr.push(d);
+  renderPhone();
+  clearScreen();                   // ready for the next digit
+});
+document.getElementById('clear').addEventListener('click', clearScreen);
+document.getElementById('back').addEventListener('click', () => {
+  digitsArr.pop(); renderPhone();
+});
+
+// boot
+clearScreen();
+renderPhone();
+</script>
+</body>
+</html>

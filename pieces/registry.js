@@ -3,6 +3,36 @@
 // pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'etch-a-phone',
+    title: 'Etch-a-Phone',
+    description: 'Enter your phone number by etching each digit on an Etch-a-Sketch. Onboard OCR guesses what you drew.',
+    category: 'Interactions',
+    tags: ['etch-a-sketch', 'ocr', 'phone'],
+    icon: 'gesture',
+    status: 'live',
+    sin: 'Gating a text field behind one-line handwriting OCR',
+  },
+  {
+    id: 'random-phone',
+    title: 'Random phone',
+    description: 'No field to type in — it shows a random phone number and asks if it is yours. Next for another.',
+    category: 'Interactions',
+    tags: ['phone', 'random', 'input'],
+    icon: 'casino',
+    status: 'live',
+    sin: 'Replacing input with a slot machine',
+  },
+  {
+    id: 'date-boomerang',
+    title: 'Date Boomerang',
+    description: 'A birthday slider whose handle bounces end to end. Hit Pick at the right instant to catch a date.',
+    category: 'Interactions',
+    tags: ['slider', 'date', 'timing'],
+    icon: 'cake',
+    status: 'live',
+    sin: 'The date handle never holds still',
+  },
+  {
     id: 'date-slider',
     title: 'Date Slider',
     description: 'Pick your exact birthday with one slider spanning 125 years. One pixel ≈ months.',
