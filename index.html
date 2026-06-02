@@ -551,12 +551,37 @@ function buildShards(clickX, clickY) {
       ]);
     }
   }
-  return rects;
+  return { rects, R };
+}
+
+// Bake a radial lens warp of the page snapshot around the impact onto the
+// damage canvas — bends the surrounding area like pressed/cracked glass.
+function warpImpact(clickX, clickY, R) {
+  const bands = 8;
+  const rIn   = R * 0.55;     // start just inside the hole
+  const rOut  = R * 1.7;      // fade out a little beyond the impact
+  for (let i = bands - 1; i >= 0; i--) {
+    const f0 = i / bands, f1 = (i + 1) / bands;
+    const innerR = rIn + (rOut - rIn) * f0;
+    const outerR = rIn + (rOut - rIn) * f1;
+    const m = 1 + 0.28 * (1 - f1) * (1 - f1);   // strongest near hole → 1 at edge
+    dmgCtx.save();
+    dmgCtx.beginPath();
+    dmgCtx.arc(clickX, clickY, outerR, 0, Math.PI * 2);
+    dmgCtx.arc(clickX, clickY, innerR, 0, Math.PI * 2, true);
+    dmgCtx.clip('evenodd');
+    dmgCtx.translate(clickX, clickY);
+    dmgCtx.scale(m, m);
+    dmgCtx.translate(-clickX, -clickY);
+    dmgCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, W, H);
+    dmgCtx.restore();
+  }
 }
 
 function spawnShatter(clickX, clickY) {
   if (!sourceCanvas) return;
-  const rects = buildShards(clickX, clickY);
+  const { rects, R } = buildShards(clickX, clickY);
+  warpImpact(clickX, clickY, R);   // distort the surrounding area first
   rects.forEach(verts => {
     const cx  = verts.reduce((s, v) => s + v.x, 0) / verts.length;
     const cy  = verts.reduce((s, v) => s + v.y, 0) / verts.length;
