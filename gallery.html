@@ -95,6 +95,17 @@ tailwind.config = {
     pointer-events: none;
     display: block;
   }
+  /* Masks to hide the fixed back-button (top) and meta bar (bottom) */
+  .card-preview::before,
+  .card-preview::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    z-index: 2;
+    background: #fff;
+  }
+  .card-preview::before { top: 0;    height: 26px; }
+  .card-preview::after  { bottom: 0; height: 18px; }
 
   /* ── Card info ─────────────────────────────────────────────── */
   .card-info {
