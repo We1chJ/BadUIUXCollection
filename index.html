@@ -520,7 +520,7 @@ function buildSource() {
 
 // Brick-grid explosion local to a click point
 function buildShards(clickX, clickY) {
-  const R  = 90;   // blast radius
+  const R  = 55;   // blast radius
   const BW = 48;   // brick width
   const BH = 24;   // brick height
   const cols = Math.ceil(R * 2 / BW) + 2;
@@ -537,14 +537,12 @@ function buildShards(clickX, clickY) {
       const cx = x + BW / 2;
       const cy = y + BH / 2;
       if (Math.hypot(cx - clickX, cy - clickY) > R) continue;
-      // Slight random size jitter so bricks don't look perfectly uniform
-      const jx = (Math.random() - 0.5) * 4;
-      const jy = (Math.random() - 0.5) * 2;
+      // No jitter — bricks tile edge-to-edge with no gaps
       bricks.push([
-        { x: x + jx,       y: y + jy       },
-        { x: x + BW + jx,  y: y + jy       },
-        { x: x + BW + jx,  y: y + BH + jy  },
-        { x: x + jx,       y: y + BH + jy  },
+        { x: x,       y: y       },
+        { x: x + BW,  y: y       },
+        { x: x + BW,  y: y + BH  },
+        { x: x,       y: y + BH  },
       ]);
     }
   }
