@@ -9,7 +9,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: #f9f9f9;
+    background: #000;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -20,6 +20,12 @@
   }
 
   /* ── Canvases ── */
+  #glitch-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
   #damage, #shatter {
     position: fixed;
     inset: 0;
@@ -27,6 +33,16 @@
   }
   #damage  { z-index: 50;  } /* persistent black wall traces */
   #shatter { z-index: 100; } /* flying shards */
+
+  /* ── Vignettes ── */
+  #vignette-outer, #vignette-center {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  #vignette-outer  { background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.95) 100%); }
+  #vignette-center { background: radial-gradient(circle, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 55%); }
 
   /* ── Target cursor ── */
   #target-cursor {
@@ -41,7 +57,7 @@
     position: absolute;
     top: 50%; left: 50%;
     width: 4px; height: 4px;
-    background: #000;
+    background: #fff;
     border-radius: 50%;
     transform: translate(-50%, -50%);
   }
@@ -51,10 +67,10 @@
     width: 12px; height: 12px;
     will-change: transform;
   }
-  .tc-corner.tl { border-top: 3px solid #000; border-left:  3px solid #000; }
-  .tc-corner.tr { border-top: 3px solid #000; border-right: 3px solid #000; }
-  .tc-corner.br { border-bottom: 3px solid #000; border-right: 3px solid #000; }
-  .tc-corner.bl { border-bottom: 3px solid #000; border-left:  3px solid #000; }
+  .tc-corner.tl { border-top: 3px solid #fff; border-left:  3px solid #fff; }
+  .tc-corner.tr { border-top: 3px solid #fff; border-right: 3px solid #fff; }
+  .tc-corner.br { border-bottom: 3px solid #fff; border-right: 3px solid #fff; }
+  .tc-corner.bl { border-bottom: 3px solid #fff; border-left:  3px solid #fff; }
 
   /* ── Corner readouts ── */
   #coords, #piece-count {
@@ -67,8 +83,8 @@
     z-index: 9998;
     user-select: none;
   }
-  #coords       { left: 24px;  color: #999; }
-  #piece-count  { right: 24px; color: #ccc; }
+  #coords       { left: 24px;  color: #444; }
+  #piece-count  { right: 24px; color: #444; }
 
   /* ── Content ── */
   .center {
@@ -79,7 +95,7 @@
     padding: 24px;
     text-align: center;
     position: relative;
-    z-index: 1;
+    z-index: 10;
   }
   .title {
     font-family: 'EB Garamond', serif;
@@ -87,12 +103,12 @@
     font-size: clamp(64px, 12vw, 140px);
     line-height: 1;
     letter-spacing: -0.03em;
-    color: #000;
+    color: #fff;
   }
   .subtitle {
     font-size: 11px;
     font-weight: 400;
-    color: #aaa;
+    color: #666;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     margin-top: -32px;
@@ -110,10 +126,10 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-decoration: none;
-    color: #000;
-    background: #fff;
-    border: 2px solid #000;
-    box-shadow: 3px 3px 0 #000;
+    color: #fff;
+    background: transparent;
+    border: 2px solid #fff;
+    box-shadow: 3px 3px 0 #fff;
     padding: 16px 40px;
     cursor: none;
     width: 220px;
@@ -122,13 +138,16 @@
     justify-content: center;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #000; }
-  .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #000; }
-  .btn.filled { background: #000; color: #fff; }
+  .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #fff; }
+  .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #fff; }
+  .btn.filled { background: #fff; color: #000; }
 </style>
 </head>
 <body>
 
+<canvas id="glitch-bg"></canvas>
+<div id="vignette-outer"></div>
+<div id="vignette-center"></div>
 <canvas id="damage"></canvas>
 <canvas id="shatter"></canvas>
 
@@ -155,6 +174,80 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="./pieces/registry.js"></script>
 <script>
+// ── LetterGlitch background ───────────────────────────────────────────────────
+(function () {
+  const COLORS     = ['#2b4539', '#61dca3', '#61b3dc'];
+  const SPEED      = 50;   // ms between updates
+  const CHAR_W     = 10;
+  const CHAR_H     = 20;
+  const FONT_SIZE  = 16;
+  const CHARS      = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789');
+
+  const canvas = document.getElementById('glitch-bg');
+  const ctx    = canvas.getContext('2d');
+  let letters  = [], cols = 0, rows = 0, lastTick = 0;
+
+  function rndChar()  { return CHARS[Math.random() * CHARS.length | 0]; }
+  function rndRgb()   { const c = COLORS[Math.random() * COLORS.length | 0]; return hexToRgb(c); }
+  function hexToRgb(h) {
+    h = h.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (_, r, g, b) => r+r+g+g+b+b);
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
+    return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:0,g:0,b:0};
+  }
+
+  function resize() {
+    const dpr = devicePixelRatio || 1;
+    const W = innerWidth, H = innerHeight;
+    canvas.width  = W * dpr; canvas.height = H * dpr;
+    canvas.style.width  = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(W / CHAR_W); rows = Math.ceil(H / CHAR_H);
+    letters = Array.from({ length: cols * rows }, () => {
+      const c = rndRgb();
+      return { char: rndChar(), r: c.r, g: c.g, b: c.b, tr: c.r, tg: c.g, tb: c.b, p: 1 };
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.font = FONT_SIZE + 'px monospace';
+    ctx.textBaseline = 'top';
+    letters.forEach((l, i) => {
+      ctx.fillStyle = `rgb(${l.r|0},${l.g|0},${l.b|0})`;
+      ctx.fillText(l.char, (i % cols) * CHAR_W, (i / cols | 0) * CHAR_H);
+    });
+  }
+
+  function update() {
+    const n = Math.max(1, letters.length * 0.05 | 0);
+    for (let i = 0; i < n; i++) {
+      const l = letters[Math.random() * letters.length | 0];
+      if (!l) continue;
+      l.char = rndChar();
+      const t = rndRgb();
+      l.tr = t.r; l.tg = t.g; l.tb = t.b; l.p = 0;
+    }
+  }
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+    // smooth color lerp every frame
+    let dirty = false;
+    letters.forEach(l => {
+      if (l.p < 1) {
+        l.r += (l.tr - l.r) * 0.08; l.g += (l.tg - l.g) * 0.08; l.b += (l.tb - l.b) * 0.08;
+        l.p += 0.05; dirty = true;
+      }
+    });
+    if (now - lastTick >= SPEED) { update(); lastTick = now; dirty = true; }
+    if (dirty) draw();
+  }
+
+  resize();
+  requestAnimationFrame(animate);
+  window.addEventListener('resize', resize);
+})();
+
 // ── Piece count ──────────────────────────────────────────────────────────────
 const total = (window.PIECES || []).length;
 const live  = (window.PIECES || []).filter(p => p.status === 'live').length;
