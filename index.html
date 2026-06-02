@@ -320,7 +320,7 @@ void main(){
   function draw() {
     gl.uniform1f(uTime, (performance.now() - t0) / 1000);
     const dpr = devicePixelRatio || 1;
-    gl.uniform2f(uMPos, mx * dpr, (innerHeight - my) * dpr);
+    gl.uniform2f(uMPos, mx * dpr, my * dpr);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     requestAnimationFrame(draw);
   }
