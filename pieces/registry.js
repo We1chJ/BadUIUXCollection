@@ -3,6 +3,18 @@
 // pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'unsubscribe-cursor',
+    title: 'Unsubscribe',
+    description: 'A plain unsubscribe button — hover it and the cursor flips you off instead of pointing.',
+    category: 'Interactions',
+    tags: ['cursor', 'button', 'hostile'],
+    icon: 'back_hand',
+
+    dateAdded: '2026-06-02',
+    credit: 'Classic',
+    sin: "Custom cursor communicates contempt for the user's intent",
+  },
+  {
     id: 'etch-a-phone',
     title: 'Etch-a-Phone',
     description: 'Enter your phone number by etching each digit on an Etch-a-Sketch. Onboard OCR guesses what you drew.',

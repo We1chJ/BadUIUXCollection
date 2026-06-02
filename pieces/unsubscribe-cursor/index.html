@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsubscribe</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Default pointer cursor (pointing hand) encoded as SVG */
+    .unsubscribe-btn {
+      padding: 18px 48px;
+      font-size: 28px;
+      font-weight: 400;
+      background: #e8e8e8;
+      border: 2px solid #555;
+      border-radius: 12px;
+      color: #111;
+      letter-spacing: 0.5px;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'%3E%3C!-- pointing hand --%3E%3Cg fill='white' stroke='black' stroke-width='1.5'%3E%3C!-- palm --%3E%3Crect x='8' y='16' width='16' height='18' rx='3'/%3E%3C!-- index finger --%3E%3Crect x='12' y='4' width='5' height='16' rx='2.5'/%3E%3C!-- middle finger --%3E%3Crect x='18' y='8' width='5' height='12' rx='2.5'/%3E%3C!-- ring finger --%3E%3Crect x='7' y='10' width='5' height='10' rx='2.5'/%3E%3C!-- thumb --%3E%3Crect x='2' y='18' width='8' height='5' rx='2.5'/%3E%3C/g%3E%3C/svg%3E") 12 4, pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+
+    /* Middle finger cursor on hover */
+    .unsubscribe-btn:hover {
+      background: #d8d8d8;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='44' viewBox='0 0 32 44'%3E%3Cg fill='white' stroke='black' stroke-width='1.5'%3E%3C!-- palm --%3E%3Crect x='7' y='20' width='18' height='18' rx='3'/%3E%3C!-- middle finger (raised tall) --%3E%3Crect x='13' y='2' width='6' height='22' rx='3'/%3E%3C!-- index finger (curled/short) --%3E%3Crect x='7' y='18' width='5' height='8' rx='2.5'/%3E%3C!-- ring finger (curled/short) --%3E%3Crect x='20' y='18' width='5' height='8' rx='2.5'/%3E%3C!-- pinky (curled/short) --%3E%3Crect x='21' y='22' width='4' height='6' rx='2'/%3E%3C!-- thumb --%3E%3Crect x='2' y='24' width='7' height='5' rx='2.5'/%3E%3C/g%3E%3C/svg%3E") 16 2, pointer;
+    }
+  </style>
+</head>
+<body>
+  <button class="unsubscribe-btn">unsubscribe</button>
+</body>
+</html>
