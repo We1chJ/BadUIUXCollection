@@ -9,7 +9,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['etch-a-sketch', 'ocr', 'phone'],
     icon: 'gesture',
-    status: 'live',
+
     dateAdded: '2026-05-20',
     credit: 'Reddit',
     sin: 'Gating a text field behind one-line handwriting OCR',
@@ -21,7 +21,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['phone', 'random', 'input'],
     icon: 'casino',
-    status: 'live',
+
     dateAdded: '2026-05-20',
     credit: 'Reddit',
     sin: 'Replacing input with a slot machine',
@@ -33,7 +33,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['slider', 'date', 'timing'],
     icon: 'cake',
-    status: 'live',
+
     dateAdded: '2026-05-20',
     credit: 'Reddit',
     sin: 'The date handle never holds still',
@@ -45,7 +45,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['slider', 'date', 'precision'],
     icon: 'calendar_month',
-    status: 'live',
+
     dateAdded: '2026-05-10',
     credit: 'Reddit',
     sin: 'Continuous control for a precise discrete value',
@@ -57,7 +57,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['slider', 'input', 'phone'],
     icon: 'undo',
-    status: 'live',
+
     dateAdded: '2026-05-15',
     credit: 'Reddit',
     sin: 'Control refuses to hold its value',
@@ -69,7 +69,7 @@ window.PIECES = [
     category: 'Interactions',
     tags: ['volume', 'pump', 'effort'],
     icon: 'air',
-    status: 'live',
+
     dateAdded: '2026-05-01',
     credit: 'Reddit',
     sin: 'Absurd physical effort for a one-click control',

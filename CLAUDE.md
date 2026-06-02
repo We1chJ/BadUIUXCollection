@@ -16,9 +16,8 @@ Bad design here is **intentional and crafted**. When building a piece:
 
 ## Gallery Rules
 
-- **Only display pieces with an actual `pieces/{id}/index.html` file.** Never add placeholder or coming-soon entries to the gallery.
-- `pieces/registry.js` is the single source of truth. Only set `status: 'live'` when the file exists.
-- The gallery filters on `status === 'live'` — do not remove this guard.
+- **Only add a piece to `pieces/registry.js` when `pieces/{id}/index.html` actually exists.** No placeholders or coming-soon entries.
+- The gallery renders every entry in the registry — keep the registry honest.
 
 ## Tech Stack & Structure
 
