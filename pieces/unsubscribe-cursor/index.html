@@ -1,44 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unsubscribe</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Unsubscribe — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, Arial, sans-serif; background: #fff; min-height: 100vh; }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      font-family: Arial, sans-serif;
-    }
+  /* ── Back button ── */
+  .back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #000;
+    border: 2px solid #000;
+    padding: 6px 12px;
+    box-shadow: 3px 3px 0 #000;
+    background: #fff;
+    transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
 
-    /* Default pointer cursor (pointing hand) encoded as SVG */
-    .unsubscribe-btn {
-      padding: 18px 48px;
-      font-size: 28px;
-      font-weight: 400;
-      background: #e8e8e8;
-      border: 2px solid #555;
-      border-radius: 12px;
-      color: #111;
-      letter-spacing: 0.5px;
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'%3E%3C!-- pointing hand --%3E%3Cg fill='white' stroke='black' stroke-width='1.5'%3E%3C!-- palm --%3E%3Crect x='8' y='16' width='16' height='18' rx='3'/%3E%3C!-- index finger --%3E%3Crect x='12' y='4' width='5' height='16' rx='2.5'/%3E%3C!-- middle finger --%3E%3Crect x='18' y='8' width='5' height='12' rx='2.5'/%3E%3C!-- ring finger --%3E%3Crect x='7' y='10' width='5' height='10' rx='2.5'/%3E%3C!-- thumb --%3E%3Crect x='2' y='18' width='8' height='5' rx='2.5'/%3E%3C/g%3E%3C/svg%3E") 12 4, pointer;
-      transition: background 0.15s;
-      user-select: none;
-    }
+  /* ── Meta bar at bottom ── */
+  .meta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 2px solid #000;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    font-size: 12px;
+    gap: 16px;
+  }
+  .meta-title { font-weight: 600; }
+  .meta-sin   { color: #5e5e5e; font-style: italic; }
+  .meta-cat   {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border: 2px solid #000;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
 
-    /* Middle finger cursor on hover */
-    .unsubscribe-btn:hover {
-      background: #d8d8d8;
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='44' viewBox='0 0 32 44'%3E%3Cg fill='white' stroke='black' stroke-width='1.5'%3E%3C!-- palm --%3E%3Crect x='7' y='20' width='18' height='18' rx='3'/%3E%3C!-- middle finger (raised tall) --%3E%3Crect x='13' y='2' width='6' height='22' rx='3'/%3E%3C!-- index finger (curled/short) --%3E%3Crect x='7' y='18' width='5' height='8' rx='2.5'/%3E%3C!-- ring finger (curled/short) --%3E%3Crect x='20' y='18' width='5' height='8' rx='2.5'/%3E%3C!-- pinky (curled/short) --%3E%3Crect x='21' y='22' width='4' height='6' rx='2'/%3E%3C!-- thumb --%3E%3Crect x='2' y='24' width='7' height='5' rx='2.5'/%3E%3C/g%3E%3C/svg%3E") 16 2, pointer;
-    }
-  </style>
+  /* ── Stage ── */
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 80px 24px;
+  }
+
+  /* ── The bad UI ── */
+  .unsubscribe-btn {
+    padding: 18px 48px;
+    font-size: 28px;
+    font-weight: 400;
+    background: #e8e8e8;
+    border: 2px solid #555;
+    border-radius: 12px;
+    color: #111;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  /* Middle finger cursor on hover — silhouette style: black fill + white cutouts */
+  .unsubscribe-btn:hover {
+    background: #d8d8d8;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='40' viewBox='0 0 32 40'%3E%3Crect x='11' y='1' width='10' height='22' rx='5' fill='black'/%3E%3Crect x='3' y='13' width='9' height='10' rx='4' fill='black'/%3E%3Crect x='20' y='13' width='9' height='10' rx='4' fill='black'/%3E%3Crect x='2' y='19' width='28' height='18' rx='6' fill='black'/%3E%3Crect x='0' y='24' width='6' height='9' rx='3' fill='black'/%3E%3Crect x='13.5' y='3.5' width='5' height='18.5' rx='2.5' fill='white'/%3E%3Crect x='5.5' y='15.5' width='4' height='6.5' rx='2' fill='white'/%3E%3Crect x='22.5' y='15.5' width='4' height='6.5' rx='2' fill='white'/%3E%3Crect x='5' y='22' width='22' height='12' rx='3' fill='white'/%3E%3C/svg%3E") 16 2, pointer;
+  }
+</style>
 </head>
 <body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="stage">
   <button class="unsubscribe-btn">unsubscribe</button>
+</div>
+
+<div class="meta">
+  <span class="meta-title">Unsubscribe</span>
+  <span class="meta-sin">UX sin: cursor flips you off for daring to leave</span>
+  <span class="meta-cat">Interactions</span>
+</div>
+
 </body>
 </html>

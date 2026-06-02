@@ -19,6 +19,17 @@ Bad design here is **intentional and crafted**. When building a piece:
 - **Only add a piece to `pieces/registry.js` when `pieces/{id}/index.html` actually exists.** No placeholders or coming-soon entries.
 - The gallery renders every entry in the registry — keep the registry honest.
 
+## Piece HTML Template
+
+**Every new piece `index.html` must follow the structure in `pieces/_template/index.html`.** No exceptions. That means:
+
+1. **Back button** (top-left, fixed) — `<a class="back" href="../../gallery.html">← Gallery</a>` with the exact CSS from the template.
+2. **Stage wrapper** — `<div class="stage">` centered with `min-height: 100vh` and `padding: 80px 24px` so the bad UI has breathing room.
+3. **Meta bar** (bottom, fixed) — `<div class="meta">` with `.meta-title` (piece name), `.meta-sin` (the UX crime), and `.meta-cat` (category label). Fill these from the registry entry.
+4. **Title tag** — `<title>Piece Name — BAD UI UX</title>`.
+
+Copy the template verbatim for the chrome (back button + meta bar CSS + meta bar HTML), then put the bad UI inside `.stage`. Do not omit or redesign any of these three structural elements.
+
 ## Tech Stack & Structure
 
 No stack is prescribed — each piece can be standalone HTML/CSS/JS, a React component, a Svelte app, etc. Organize by directory, one subdirectory per piece. Each should be self-contained and openable in a browser or run locally without setup.
