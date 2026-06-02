@@ -19,6 +19,15 @@
     overflow: hidden;
   }
 
+  /* ── Canvases ── */
+  #damage, #shatter {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+  #damage  { z-index: 50;  } /* persistent black wall traces */
+  #shatter { z-index: 100; } /* flying shards */
+
   /* ── Target cursor ── */
   #target-cursor {
     position: fixed;
@@ -28,7 +37,6 @@
     z-index: 9999;
     will-change: transform;
   }
-
   #cursor-dot {
     position: absolute;
     top: 50%; left: 50%;
@@ -36,44 +44,31 @@
     background: #000;
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    will-change: transform;
   }
-
   .tc-corner {
     position: absolute;
     top: 50%; left: 50%;
     width: 12px; height: 12px;
     will-change: transform;
   }
-  .tc-corner.tl { border-top: 3px solid #000; border-left: 3px solid #000; }
+  .tc-corner.tl { border-top: 3px solid #000; border-left:  3px solid #000; }
   .tc-corner.tr { border-top: 3px solid #000; border-right: 3px solid #000; }
   .tc-corner.br { border-bottom: 3px solid #000; border-right: 3px solid #000; }
-  .tc-corner.bl { border-bottom: 3px solid #000; border-left: 3px solid #000; }
+  .tc-corner.bl { border-bottom: 3px solid #000; border-left:  3px solid #000; }
 
   /* ── Corner readouts ── */
-  #coords {
+  #coords, #piece-count {
     position: fixed;
-    bottom: 20px; left: 24px;
+    bottom: 20px;
     font-family: 'Courier New', monospace;
     font-size: 10px;
-    color: #999;
     letter-spacing: 0.05em;
     pointer-events: none;
     z-index: 9998;
     user-select: none;
   }
-
-  #piece-count {
-    position: fixed;
-    bottom: 20px; right: 24px;
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    color: #ccc;
-    letter-spacing: 0.05em;
-    pointer-events: none;
-    z-index: 9998;
-    user-select: none;
-  }
+  #coords       { left: 24px;  color: #999; }
+  #piece-count  { right: 24px; color: #ccc; }
 
   /* ── Content ── */
   .center {
@@ -86,7 +81,6 @@
     position: relative;
     z-index: 1;
   }
-
   .title {
     font-family: 'EB Garamond', serif;
     font-weight: 500;
@@ -95,7 +89,6 @@
     letter-spacing: -0.03em;
     color: #000;
   }
-
   .subtitle {
     font-size: 11px;
     font-weight: 400;
@@ -104,14 +97,12 @@
     text-transform: uppercase;
     margin-top: -32px;
   }
-
   .buttons {
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
     justify-content: center;
   }
-
   .btn {
     font-family: Inter, sans-serif;
     font-size: 13px;
@@ -131,26 +122,16 @@
     justify-content: center;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-
-  .btn:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 #000;
-  }
-
-  .btn:active {
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0 #000;
-  }
-
-  .btn.filled {
-    background: #000;
-    color: #fff;
-  }
+  .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #000; }
+  .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #000; }
+  .btn.filled { background: #000; color: #fff; }
 </style>
 </head>
 <body>
 
-<!-- Target cursor -->
+<canvas id="damage"></canvas>
+<canvas id="shatter"></canvas>
+
 <div id="target-cursor">
   <div id="cursor-dot"></div>
   <div class="tc-corner tl"></div>
@@ -159,14 +140,12 @@
   <div class="tc-corner bl"></div>
 </div>
 
-<!-- Readouts -->
 <div id="coords">X: 0 &nbsp; Y: 0</div>
 <div id="piece-count"></div>
 
 <div class="center">
   <h1 class="title">BAD UI UX</h1>
   <p class="subtitle">where good design comes to die</p>
-
   <div class="buttons">
     <a class="btn cursor-target" href="./gallery.html">Pick One</a>
     <button class="btn filled cursor-target" onclick="goRandom()">Random</button>
@@ -181,7 +160,6 @@ const total = (window.PIECES || []).length;
 const live  = (window.PIECES || []).filter(p => p.status === 'live').length;
 document.getElementById('piece-count').textContent = live + ' / ' + total + ' live';
 
-// ── Random nav ───────────────────────────────────────────────────────────────
 function goRandom() {
   const livePieces = (window.PIECES || []).filter(p => p.status === 'live');
   if (livePieces.length) {
@@ -192,134 +170,320 @@ function goRandom() {
   }
 }
 
-// ── TargetCursor (vanilla JS port) ──────────────────────────────────────────
-const CORNER_SIZE  = 12;
-const BORDER_W     = 3;
-const SPIN_DUR     = 2;
-const HOVER_DUR    = 0.2;
-
+// ── TargetCursor ─────────────────────────────────────────────────────────────
+const CORNER_SIZE = 12, BORDER_W = 3, SPIN_DUR = 2, HOVER_DUR = 0.2;
 const cursorEl  = document.getElementById('target-cursor');
 const dotEl     = document.getElementById('cursor-dot');
 const corners   = Array.from(document.querySelectorAll('.tc-corner'));
-
-const initPos = [
-  { x: -CORNER_SIZE * 1.5, y: -CORNER_SIZE * 1.5 }, // tl
-  { x:  CORNER_SIZE * 0.5, y: -CORNER_SIZE * 1.5 }, // tr
-  { x:  CORNER_SIZE * 0.5, y:  CORNER_SIZE * 0.5 }, // br
-  { x: -CORNER_SIZE * 1.5, y:  CORNER_SIZE * 0.5 }, // bl
+const initPos   = [
+  { x: -CORNER_SIZE * 1.5, y: -CORNER_SIZE * 1.5 },
+  { x:  CORNER_SIZE * 0.5, y: -CORNER_SIZE * 1.5 },
+  { x:  CORNER_SIZE * 0.5, y:  CORNER_SIZE * 0.5 },
+  { x: -CORNER_SIZE * 1.5, y:  CORNER_SIZE * 0.5 },
 ];
 
-gsap.set(cursorEl, {
-  xPercent: -50, yPercent: -50,
-  x: window.innerWidth / 2, y: window.innerHeight / 2,
-});
+gsap.set(cursorEl, { xPercent: -50, yPercent: -50, x: innerWidth / 2, y: innerHeight / 2 });
 corners.forEach((c, i) => gsap.set(c, initPos[i]));
 
-// Spin
 let spinTl = gsap.timeline({ repeat: -1 })
   .to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
 
-// Mouse move
 const coordsEl = document.getElementById('coords');
 window.addEventListener('mousemove', e => {
   gsap.to(cursorEl, { x: e.clientX, y: e.clientY, duration: 0.1, ease: 'power3.out' });
   coordsEl.textContent = 'X: ' + e.clientX + '   Y: ' + e.clientY;
 });
-
-// Click scale
 window.addEventListener('mousedown', () => {
-  gsap.to(dotEl,    { scale: 0.5, duration: 0.15 });
+  gsap.to(dotEl,    { scale: 0.5,  duration: 0.15 });
   gsap.to(cursorEl, { scale: 0.85, duration: 0.15 });
 });
 window.addEventListener('mouseup', () => {
   gsap.to(dotEl,    { scale: 1, duration: 0.25 });
-  gsap.to(cursorEl, { scale: 1, duration: 0.2 });
+  gsap.to(cursorEl, { scale: 1, duration: 0.2  });
 });
 
-// Target hover
-let activeTarget    = null;
-let currentLeave    = null;
-let resumeTimeout   = null;
-let isActive        = false;
-let targetCornerPos = null;
-const activeStr     = { current: 0 };
+let activeTarget = null, currentLeave = null, resumeTimeout = null;
+let isActive = false, targetCornerPos = null;
+const activeStr = { current: 0 };
 
 const ticker = () => {
   if (!targetCornerPos || !isActive || activeStr.current === 0) return;
   const cx = gsap.getProperty(cursorEl, 'x');
   const cy = gsap.getProperty(cursorEl, 'y');
   corners.forEach((corner, i) => {
-    const tx = targetCornerPos[i].x - cx;
-    const ty = targetCornerPos[i].y - cy;
-    const cur_x = gsap.getProperty(corner, 'x');
-    const cur_y = gsap.getProperty(corner, 'y');
+    const tx = targetCornerPos[i].x - cx, ty = targetCornerPos[i].y - cy;
+    const cur_x = gsap.getProperty(corner, 'x'), cur_y = gsap.getProperty(corner, 'y');
     const dur = activeStr.current >= 0.99 ? 0.2 : 0.05;
-    gsap.to(corner, {
-      x: cur_x + (tx - cur_x) * activeStr.current,
-      y: cur_y + (ty - cur_y) * activeStr.current,
-      duration: dur, ease: 'power1.out', overwrite: 'auto',
-    });
+    gsap.to(corner, { x: cur_x + (tx - cur_x) * activeStr.current, y: cur_y + (ty - cur_y) * activeStr.current, duration: dur, ease: 'power1.out', overwrite: 'auto' });
   });
 };
 
 window.addEventListener('mouseover', e => {
   const target = e.target.closest('.cursor-target');
   if (!target || target === activeTarget) return;
-
-  if (activeTarget && currentLeave) {
-    activeTarget.removeEventListener('mouseleave', currentLeave);
-  }
+  if (activeTarget && currentLeave) activeTarget.removeEventListener('mouseleave', currentLeave);
   if (resumeTimeout) { clearTimeout(resumeTimeout); resumeTimeout = null; }
 
   activeTarget = target;
   isActive = true;
-
   spinTl.pause();
   gsap.killTweensOf(cursorEl, 'rotation');
   gsap.set(cursorEl, { rotation: 0 });
 
   const rect = target.getBoundingClientRect();
-  const cx   = gsap.getProperty(cursorEl, 'x');
-  const cy   = gsap.getProperty(cursorEl, 'y');
-
+  const cx = gsap.getProperty(cursorEl, 'x'), cy = gsap.getProperty(cursorEl, 'y');
   targetCornerPos = [
-    { x: rect.left  - BORDER_W,               y: rect.top    - BORDER_W },
-    { x: rect.right + BORDER_W - CORNER_SIZE,  y: rect.top    - BORDER_W },
-    { x: rect.right + BORDER_W - CORNER_SIZE,  y: rect.bottom + BORDER_W - CORNER_SIZE },
-    { x: rect.left  - BORDER_W,               y: rect.bottom + BORDER_W - CORNER_SIZE },
+    { x: rect.left  - BORDER_W,              y: rect.top    - BORDER_W },
+    { x: rect.right + BORDER_W - CORNER_SIZE, y: rect.top    - BORDER_W },
+    { x: rect.right + BORDER_W - CORNER_SIZE, y: rect.bottom + BORDER_W - CORNER_SIZE },
+    { x: rect.left  - BORDER_W,              y: rect.bottom + BORDER_W - CORNER_SIZE },
   ];
 
   gsap.ticker.add(ticker);
   gsap.to(activeStr, { current: 1, duration: HOVER_DUR, ease: 'power2.out' });
-  corners.forEach((c, i) => {
-    gsap.to(c, { x: targetCornerPos[i].x - cx, y: targetCornerPos[i].y - cy, duration: 0.2, ease: 'power2.out' });
-  });
+  corners.forEach((c, i) => gsap.to(c, { x: targetCornerPos[i].x - cx, y: targetCornerPos[i].y - cy, duration: 0.2, ease: 'power2.out' }));
 
   currentLeave = () => {
     gsap.ticker.remove(ticker);
-    isActive = false;
-    targetCornerPos = null;
+    isActive = false; targetCornerPos = null;
     gsap.set(activeStr, { current: 0 });
     activeTarget = null;
-
-    corners.forEach((c, i) => {
-      gsap.to(c, { ...initPos[i], duration: 0.3, ease: 'power3.out' });
-    });
-
+    corners.forEach((c, i) => gsap.to(c, { ...initPos[i], duration: 0.3, ease: 'power3.out' }));
     resumeTimeout = setTimeout(() => {
       if (!activeTarget) {
         spinTl.kill();
-        spinTl = gsap.timeline({ repeat: -1 })
-          .to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
+        spinTl = gsap.timeline({ repeat: -1 }).to(cursorEl, { rotation: '+=360', duration: SPIN_DUR, ease: 'none' });
       }
       resumeTimeout = null;
     }, 50);
-
     target.removeEventListener('mouseleave', currentLeave);
     currentLeave = null;
   };
-
   target.addEventListener('mouseleave', currentLeave);
+});
+
+// ── Shatter ───────────────────────────────────────────────────────────────────
+const dmgCanvas = document.getElementById('damage');
+const dmgCtx    = dmgCanvas.getContext('2d');
+const canvas    = document.getElementById('shatter');
+const ctx       = canvas.getContext('2d');
+const dpr       = window.devicePixelRatio || 1;
+let W, H, sourceCanvas;
+
+function resize() {
+  W = innerWidth; H = innerHeight;
+  [canvas, dmgCanvas].forEach(c => {
+    c.width  = W * dpr; c.height = H * dpr;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+  });
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dmgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// Mirror the page layout onto an offscreen canvas so shards carry real content
+function buildSource() {
+  const src  = document.createElement('canvas');
+  src.width  = W * dpr; src.height = H * dpr;
+  const sctx = src.getContext('2d');
+  sctx.scale(dpr, dpr);
+
+  // Background
+  sctx.fillStyle = '#f9f9f9';
+  sctx.fillRect(0, 0, W, H);
+
+  // Title
+  const titleEl    = document.querySelector('.title');
+  const titleRect  = titleEl.getBoundingClientRect();
+  const titleSize  = parseFloat(getComputedStyle(titleEl).fontSize);
+  sctx.font        = `500 ${titleSize}px 'EB Garamond', serif`;
+  sctx.fillStyle   = '#000';
+  sctx.textAlign   = 'center';
+  sctx.textBaseline = 'middle';
+  sctx.fillText('BAD UI UX', titleRect.left + titleRect.width / 2, titleRect.top + titleRect.height / 2);
+
+  // Subtitle
+  const subEl   = document.querySelector('.subtitle');
+  const subRect = subEl.getBoundingClientRect();
+  sctx.font     = `400 11px 'Inter', sans-serif`;
+  sctx.fillStyle = 'rgba(170,170,170,1)';
+  sctx.fillText(subEl.textContent.toUpperCase(), subRect.left + subRect.width / 2, subRect.top + subRect.height / 2);
+
+  // Buttons
+  document.querySelectorAll('.btn').forEach(btn => {
+    const r = btn.getBoundingClientRect();
+    const filled = btn.classList.contains('filled');
+
+    // Shadow
+    sctx.fillStyle = '#000';
+    sctx.fillRect(r.left + 3, r.top + 3, r.width, r.height);
+
+    // Fill
+    sctx.fillStyle = filled ? '#000' : '#fff';
+    sctx.fillRect(r.left, r.top, r.width, r.height);
+
+    // Border
+    sctx.strokeStyle = '#000'; sctx.lineWidth = 2;
+    sctx.strokeRect(r.left + 1, r.top + 1, r.width - 2, r.height - 2);
+
+    // Label
+    sctx.font = `600 13px 'Inter', sans-serif`;
+    sctx.fillStyle = filled ? '#fff' : '#000';
+    sctx.textAlign = 'center'; sctx.textBaseline = 'middle';
+    sctx.fillText(btn.textContent.trim().toUpperCase(), r.left + r.width / 2, r.top + r.height / 2);
+  });
+
+  return src;
+}
+
+// Jittered-grid triangulation local to a click point
+function buildShards(clickX, clickY) {
+  const R    = 42;
+  const grid = 10;
+  const cols = Math.ceil(R * 2 / grid) + 2;
+  const rows = Math.ceil(R * 2 / grid) + 2;
+  const ox   = clickX - (cols / 2) * grid;
+  const oy   = clickY - (rows / 2) * grid;
+  const jit  = grid * 0.65;
+  const pts  = [];
+
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      pts.push({
+        x: ox + c * grid + (Math.random() - 0.5) * jit,
+        y: oy + r * grid + (Math.random() - 0.5) * jit,
+      });
+
+  // Force-include the click point
+  pts.push({ x: clickX + (Math.random() - 0.5) * 4, y: clickY + (Math.random() - 0.5) * 4 });
+
+  const tris = [];
+  for (let r = 0; r < rows - 1; r++) {
+    for (let c = 0; c < cols - 1; c++) {
+      const tl = pts[r * cols + c], tr = pts[r * cols + c + 1];
+      const bl = pts[(r + 1) * cols + c], br = pts[(r + 1) * cols + c + 1];
+      const pairs = Math.random() > 0.5
+        ? [[tl, tr, bl], [tr, br, bl]]
+        : [[tl, tr, br], [tl, br, bl]];
+      pairs.forEach(v => {
+        const cx = (v[0].x + v[1].x + v[2].x) / 3;
+        const cy = (v[0].y + v[1].y + v[2].y) / 3;
+        if (Math.hypot(cx - clickX, cy - clickY) < R) tris.push(v);
+      });
+    }
+  }
+  return tris;
+}
+
+function spawnShatter(clickX, clickY) {
+  if (!sourceCanvas) return;
+  const tris = buildShards(clickX, clickY);
+  tris.forEach(verts => {
+    const cx  = (verts[0].x + verts[1].x + verts[2].x) / 3;
+    const cy  = (verts[0].y + verts[1].y + verts[2].y) / 3;
+
+    // Paint this triangle permanently black on the damage canvas
+    dmgCtx.beginPath();
+    dmgCtx.moveTo(verts[0].x, verts[0].y);
+    dmgCtx.lineTo(verts[1].x, verts[1].y);
+    dmgCtx.lineTo(verts[2].x, verts[2].y);
+    dmgCtx.closePath();
+    dmgCtx.fillStyle = '#0a0a0a';
+    dmgCtx.fill();
+    dmgCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+    dmgCtx.lineWidth   = 0.75;
+    dmgCtx.stroke();
+    const ang = Math.atan2(cy - clickY, cx - clickX);
+    const dist = Math.hypot(cy - clickY, cx - clickX) + 1;
+    const spd  = 2 + Math.random() * 8 + Math.min(80 / dist, 10);
+    shards.push({
+      verts, cx, cy,
+      dx: 0, dy: 0,
+      vx: Math.cos(ang) * spd * (0.5 + Math.random() * 0.8),
+      vy: Math.sin(ang) * spd * (0.5 + Math.random() * 0.8) - Math.random() * 2,
+      rot: 0,
+      rotV: (Math.random() - 0.5) * 0.09,
+    });
+  });
+}
+
+function drawShard(s) {
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.translate(s.cx + s.dx, s.cy + s.dy);
+  ctx.rotate(s.rot);
+  ctx.translate(-s.cx, -s.cy);
+
+  ctx.beginPath();
+  ctx.moveTo(s.verts[0].x, s.verts[0].y);
+  ctx.lineTo(s.verts[1].x, s.verts[1].y);
+  ctx.lineTo(s.verts[2].x, s.verts[2].y);
+  ctx.closePath();
+  ctx.clip();
+
+  // Paste the page snapshot into this shard's clip region
+  ctx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, W, H);
+
+  // Glass-edge highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth   = 1;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// Bake a settled shard permanently onto the damage canvas
+function settleShard(s) {
+  dmgCtx.save();
+  dmgCtx.globalAlpha = 1;
+  dmgCtx.translate(s.cx + s.dx, s.cy + s.dy);
+  dmgCtx.rotate(s.rot);
+  dmgCtx.translate(-s.cx, -s.cy);
+  dmgCtx.beginPath();
+  dmgCtx.moveTo(s.verts[0].x, s.verts[0].y);
+  dmgCtx.lineTo(s.verts[1].x, s.verts[1].y);
+  dmgCtx.lineTo(s.verts[2].x, s.verts[2].y);
+  dmgCtx.closePath();
+  dmgCtx.clip();
+  dmgCtx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, W, H);
+  dmgCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+  dmgCtx.lineWidth   = 1;
+  dmgCtx.stroke();
+  dmgCtx.restore();
+}
+
+let shards = [], animating = false;
+
+function loop() {
+  ctx.clearRect(0, 0, W, H);
+  const flying = [];
+  shards.forEach(s => {
+    s.vy  += 0.35;
+    s.dx  += s.vx;
+    s.dy  += s.vy;
+    s.rot += s.rotV;
+    if (s.cy + s.dy >= H - 8) {
+      s.dy = H - 8 - s.cy;
+      settleShard(s);        // bake onto damage canvas, gone from flying list
+    } else {
+      flying.push(s);
+      drawShard(s);
+    }
+  });
+  shards = flying;
+  if (shards.length) requestAnimationFrame(loop);
+  else animating = false;
+}
+
+document.addEventListener('click', e => {
+  spawnShatter(e.clientX, e.clientY);
+  if (!animating) { animating = true; requestAnimationFrame(loop); }
+});
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+resize();
+document.fonts.ready.then(() => {
+  // Small delay so CSS layout is fully painted before we measure
+  setTimeout(() => { sourceCanvas = buildSource(); }, 120);
 });
 </script>
 </body>
