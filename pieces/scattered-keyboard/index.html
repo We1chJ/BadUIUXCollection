@@ -23,8 +23,8 @@
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
     text-transform: uppercase; text-decoration: none; color: #fff;
-    border: 2px solid rgba(255,255,255,0.5); padding: 6px 12px;
-    background: transparent; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    border: 2px solid rgba(255,255,255,0.4); padding: 6px 12px;
+    background: transparent; transition: background 0.15s, border-color 0.15s;
   }
   .back:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
 
@@ -46,44 +46,55 @@
   #footer-bar a:hover { opacity: 0.65; }
   #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
   .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
-  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-title  { font-weight: 600; letter-spacing: 0.02em; }
   .pill-sin    { color: rgba(255,255,255,0.65); font-style: italic; }
   .pill-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
 
-  /* ── Instruction bar ── */
+  /* ── Instruction ── */
   #instruction {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    font-size: 13px; color: rgba(255,255,255,0.65);
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+    font-size: 13px; color: rgba(255,255,255,0.6);
     white-space: nowrap; z-index: 100; pointer-events: none;
     letter-spacing: 0.02em;
   }
 
-  /* ── Scattered keys ── */
-  .skey {
+  /* ── Falling characters ── */
+  .faller {
     position: fixed;
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: monospace; font-size: 14px;
-    color: rgba(255,255,255,0.55);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 4px;
-    z-index: 10;
+    font-family: monospace;
+    font-size: 18px;
+    color: rgba(255,255,255,0.75);
+    width: 24px;
+    text-align: center;
+    line-height: 1;
+    z-index: 20;
+    pointer-events: none;
     user-select: none;
-    transition: background 0.08s, color 0.08s, border-color 0.08s, box-shadow 0.08s;
-    cursor: default;
   }
-  .skey.wide { width: 72px; }
-  .skey.selected {
+  .faller.caught {
+    color: #e040fb;
+    text-shadow: 0 0 10px rgba(224,64,251,0.9);
+    transition: opacity 0.15s;
+    opacity: 0;
+  }
+
+  /* ── Paddle ── */
+  #paddle {
+    position: fixed;
+    bottom: 60px;
+    height: 14px;
+    width: 140px;
     background: #e040fb;
-    color: #fff;
-    border-color: #e040fb;
-    box-shadow: 0 0 14px rgba(224,64,251,0.6);
+    border-radius: 7px;
+    box-shadow: 0 0 18px rgba(224,64,251,0.7), 0 0 40px rgba(224,64,251,0.3);
+    z-index: 40;
+    pointer-events: none;
   }
 
   /* ── Login form ── */
   .login-form {
-    position: relative; z-index: 50;
-    background: rgba(13,13,26,0.92);
+    position: relative; z-index: 60;
+    background: rgba(13,13,26,0.88);
     border: 1px solid rgba(255,255,255,0.18);
     padding: 36px 32px 32px;
     width: 270px;
@@ -107,7 +118,6 @@
     display: inline-block; width: 1px; height: 14px;
     background: #fff; margin-left: 1px; flex-shrink: 0;
     animation: blink 1s step-end infinite;
-    vertical-align: middle;
   }
   .fake-input.inactive .caret { display: none; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -124,25 +134,24 @@
 
   /* ── Success overlay ── */
   #success {
-    display: none;
-    position: fixed; inset: 0; z-index: 999;
-    background: rgba(13,13,26,0.95);
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: rgba(13,13,26,0.96);
     align-items: center; justify-content: center;
     flex-direction: column; gap: 12px;
     font-size: 22px; color: #e040fb;
   }
   #success.show { display: flex; }
-  #success p { font-size: 14px; color: rgba(255,255,255,0.5); }
+  #success p { font-size: 14px; color: rgba(255,255,255,0.45); }
 </style>
 </head>
 <body>
 
 <a class="back" href="../../gallery.html">← Gallery</a>
 
-<div id="instruction">Arrow keys to move and ENTER to type • click a field to switch</div>
+<div id="instruction">Arrow keys to move the paddle • catch letters to type • ENTER for next field</div>
 
-<!-- Login form -->
-<div class="login-form" id="loginForm">
+<!-- Login form (centered by body flex) -->
+<div class="login-form">
   <h2>Enter your credentials</h2>
   <div class="fake-input active" id="field-user" onclick="setField('user')">
     <span id="user-text"></span><span class="caret"></span>
@@ -153,17 +162,20 @@
   <button class="login-btn" onclick="submitLogin()">Login</button>
 </div>
 
+<!-- Paddle -->
+<div id="paddle"></div>
+
 <!-- Success -->
 <div id="success">
-  <div>✓ Login successful</div>
-  <p>it only took you forever</p>
+  <div>✓ Logged in</div>
+  <p>congrats on catching every single letter</p>
 </div>
 
 <!-- Glass footer pill -->
 <div id="footer-bar">
   <span class="pill-title">Scattered Keyboard</span>
   <span class="footer-sep"></span>
-  <span class="pill-sin">UX sin: hunting for each letter across the screen to type</span>
+  <span class="pill-sin">UX sin: catch falling letters with a paddle to type</span>
   <span class="footer-sep"></span>
   <span class="pill-credit">via Reddit</span>
   <span class="footer-sep"></span>
@@ -173,59 +185,48 @@
 </div>
 
 <script>
-const CHARS = [
-  'a','b','c','d','e','f','g','h','i','j','k','l','m',
-  'n','o','p','q','r','s','t','u','v','w','x','y','z',
-  '0','1','2','3','4','5','6','7','8','9',
-  '@','.','_','-','!',
-  'SPC','⌫'
-];
+const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@._-!⌫'.split('');
+const PADDLE_W = 140;
+const PADDLE_H = 14;
+const PADDLE_BOTTOM = 60;    // CSS bottom value
+const CHAR_W = 24;
+const CHAR_H = 22;
+const PADDLE_SPEED = 380;    // px/s
+const FALL_SPEED_MIN = 70;
+const FALL_SPEED_MAX = 150;
+const MAX_FALLERS = 14;
+const SPAWN_INTERVAL_MIN = 500;
+const SPAWN_INTERVAL_MAX = 1100;
 
-let keys = [];        // { char, x, y, el }
-let selectedIdx = 0;
-let activeField = 'user';
+const paddleEl = document.getElementById('paddle');
+
+let paddleX = (window.innerWidth - PADDLE_W) / 2;
+let fallers = [];
 let userVal = '';
 let passVal = '';
+let activeField = 'user';
+let leftDown = false;
+let rightDown = false;
+let lastTime = null;
+let nextSpawn = 800;
 
-function initKeys() {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const margin = 20;
+function paddleTop() {
+  return window.innerHeight - PADDLE_BOTTOM - PADDLE_H;
+}
 
-  // Shuffle chars for random initial selection
-  const shuffled = [...CHARS].sort(() => Math.random() - 0.5);
+function spawnFaller() {
+  const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+  const x = Math.random() * (window.innerWidth - CHAR_W);
+  const speed = FALL_SPEED_MIN + Math.random() * (FALL_SPEED_MAX - FALL_SPEED_MIN);
 
-  // Poisson-ish placement: try random positions, reject if too close to existing
-  const placed = [];
-  const MIN_DIST = 48;
+  const el = document.createElement('div');
+  el.className = 'faller';
+  el.textContent = char;
+  el.style.left = x + 'px';
+  el.style.top = '-24px';
+  document.body.appendChild(el);
 
-  for (const char of shuffled) {
-    let x, y, attempts = 0;
-    const isWide = char === 'SPC';
-    const w = isWide ? 72 : 32;
-
-    do {
-      x = margin + Math.random() * (W - w - margin * 2);
-      y = 50 + Math.random() * (H - 100 - margin * 2);
-      attempts++;
-    } while (
-      attempts < 40 &&
-      placed.some(p => Math.hypot(p.x - x, p.y - y) < MIN_DIST)
-    );
-
-    const el = document.createElement('div');
-    el.className = 'skey' + (isWide ? ' wide' : '');
-    el.textContent = char;
-    el.style.left = x + 'px';
-    el.style.top  = y + 'px';
-    document.body.appendChild(el);
-
-    const entry = { char, x: x + (isWide ? 36 : 16), y: y + 16, el };
-    placed.push({ x, y });
-    keys.push(entry);
-  }
-
-  keys[selectedIdx].el.classList.add('selected');
+  fallers.push({ char, x, y: -24, speed, el, caught: false });
 }
 
 function setField(field) {
@@ -236,18 +237,13 @@ function setField(field) {
 
 function renderFields() {
   document.getElementById('user-text').textContent = userVal;
-  // Password: show bullets
   document.getElementById('pass-text').textContent = '●'.repeat(passVal.length);
 }
 
-function typeChar() {
-  const char = keys[selectedIdx].char;
+function appendChar(char) {
   if (char === '⌫') {
     if (activeField === 'user') userVal = userVal.slice(0, -1);
     else passVal = passVal.slice(0, -1);
-  } else if (char === 'SPC') {
-    if (activeField === 'user') userVal += ' ';
-    else passVal += ' ';
   } else {
     if (activeField === 'user') userVal += char;
     else passVal += char;
@@ -255,74 +251,78 @@ function typeChar() {
   renderFields();
 }
 
-function navigate(dir) {
-  const cur = keys[selectedIdx];
-  let best = -1, bestScore = Infinity;
-
-  keys.forEach((k, i) => {
-    if (i === selectedIdx) return;
-    const dx = k.x - cur.x;
-    const dy = k.y - cur.y;
-    let primary, perp;
-
-    switch (dir) {
-      case 'ArrowRight': if (dx <= 10) return; primary = dx;  perp = Math.abs(dy); break;
-      case 'ArrowLeft':  if (dx >= -10) return; primary = -dx; perp = Math.abs(dy); break;
-      case 'ArrowDown':  if (dy <= 10) return; primary = dy;  perp = Math.abs(dx); break;
-      case 'ArrowUp':    if (dy >= -10) return; primary = -dy; perp = Math.abs(dx); break;
-    }
-
-    // Score: weighted sum — prefer close primary, penalize large perpendicular offset
-    const score = primary + perp * 1.8;
-    if (score < bestScore) { bestScore = score; best = i; }
-  });
-
-  // Wrap: if no candidate found in that direction, pick the farthest in opposite direction
-  if (best === -1) {
-    keys.forEach((k, i) => {
-      if (i === selectedIdx) return;
-      const dx = k.x - cur.x;
-      const dy = k.y - cur.y;
-      let primary, perp;
-      switch (dir) {
-        case 'ArrowRight': primary = -dx; perp = Math.abs(dy); break;
-        case 'ArrowLeft':  primary = dx;  perp = Math.abs(dy); break;
-        case 'ArrowDown':  primary = -dy; perp = Math.abs(dx); break;
-        case 'ArrowUp':    primary = dy;  perp = Math.abs(dx); break;
-      }
-      const score = primary + perp * 1.8;
-      if (score < bestScore) { bestScore = score; best = i; }
-    });
-  }
-
-  if (best !== -1) {
-    keys[selectedIdx].el.classList.remove('selected');
-    selectedIdx = best;
-    keys[selectedIdx].el.classList.add('selected');
-  }
-}
-
 function submitLogin() {
   document.getElementById('success').classList.add('show');
 }
 
+function gameLoop(time) {
+  requestAnimationFrame(gameLoop);
+  if (!lastTime) { lastTime = time; nextSpawn = time + 800; return; }
+  const dt = (time - lastTime) / 1000;
+  lastTime = time;
+
+  // Move paddle
+  if (leftDown)  paddleX = Math.max(0, paddleX - PADDLE_SPEED * dt);
+  if (rightDown) paddleX = Math.min(window.innerWidth - PADDLE_W, paddleX + PADDLE_SPEED * dt);
+  paddleEl.style.left = paddleX + 'px';
+
+  const pTop = paddleTop();
+  const toRemove = [];
+
+  for (const f of fallers) {
+    if (f.caught) continue;
+
+    f.y += f.speed * dt;
+    f.el.style.top = f.y + 'px';
+
+    // Collision: character bottom crosses paddle top, center-x within paddle
+    const charCenterX = f.x + CHAR_W / 2;
+    const charBottom = f.y + CHAR_H;
+
+    if (charBottom >= pTop && charBottom <= pTop + PADDLE_H + f.speed * dt + 4) {
+      if (charCenterX >= paddleX && charCenterX <= paddleX + PADDLE_W) {
+        f.caught = true;
+        f.el.classList.add('caught');
+        appendChar(f.char);
+        setTimeout(() => { f.el.remove(); }, 150);
+        toRemove.push(f);
+        continue;
+      }
+    }
+
+    // Off screen
+    if (f.y > window.innerHeight + 10) {
+      f.el.remove();
+      toRemove.push(f);
+    }
+  }
+
+  fallers = fallers.filter(f => !toRemove.includes(f));
+
+  // Spawn
+  if (time >= nextSpawn && fallers.length < MAX_FALLERS) {
+    spawnFaller();
+    nextSpawn = time + SPAWN_INTERVAL_MIN + Math.random() * (SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN);
+  }
+}
+
 document.addEventListener('keydown', e => {
-  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
-    e.preventDefault();
-    navigate(e.key);
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    typeChar();
-  } else if (e.key === 'Tab') {
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); leftDown = true; }
+  if (e.key === 'ArrowRight') { e.preventDefault(); rightDown = true; }
+  if (e.key === 'Enter') {
     e.preventDefault();
     setField(activeField === 'user' ? 'pass' : 'user');
-  } else {
-    // Block all other keyboard input
-    e.preventDefault();
   }
+  // Block direct typing
+  if (e.key.length === 1) e.preventDefault();
 });
 
-initKeys();
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft')  leftDown = false;
+  if (e.key === 'ArrowRight') rightDown = false;
+});
+
+requestAnimationFrame(gameLoop);
 renderFields();
 </script>
 
