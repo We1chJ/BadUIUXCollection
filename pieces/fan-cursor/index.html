@@ -119,12 +119,14 @@
   /* ── Fan & cursor (fixed, over everything) ── */
   #fan {
     position: fixed;
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     cursor: grab;
     z-index: 500;
     top: 0; left: 0;
     transform-origin: center center;
+    user-select: none;
+    -webkit-user-drag: none;
   }
   #fan:active { cursor: grabbing; }
 
@@ -135,6 +137,8 @@
     pointer-events: none;
     z-index: 600;
     top: 0; left: 0;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 </style>
 </head>
@@ -186,24 +190,8 @@
   </div>
 </div>
 
-<!-- Fan: 3-blade propeller, blowing RIGHT at 0° rotation -->
-<svg id="fan" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- blade at 0° (right) -->
-  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#7799cc"/>
-  <!-- blade at 120° -->
-  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#6688bb" transform="rotate(120,50,50)"/>
-  <!-- blade at 240° -->
-  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#5577aa" transform="rotate(240,50,50)"/>
-  <!-- hub -->
-  <circle cx="50" cy="50" r="9" fill="#334"/>
-  <circle cx="50" cy="50" r="4" fill="#112"/>
-</svg>
-
-<!-- Cursor: classic arrow pointing upper-left -->
-<svg id="fan-cursor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path d="M3,2 L3,18 L7,14 L10,21 L13,19.5 L10,12.5 L15,12.5 Z"
-        fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
-</svg>
+<img id="fan" src="./fan.png" draggable="false">
+<img id="fan-cursor" src="./cursor.png" draggable="false">
 
 <!-- Glass footer pill -->
 <div id="footer-bar">
