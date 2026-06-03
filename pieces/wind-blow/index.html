@@ -148,30 +148,35 @@
   resize();
   window.addEventListener('resize', resize);
 
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
-  document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
-
-  let cx = mouseX, cy = mouseY, vx = 0, vy = 0;
+  // Mouse movement adds impulse; mouse position does NOT anchor the cursor.
+  // This means wind acts freely when the mouse is still.
+  let lastMX, lastMY;
+  let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  let vx = 0, vy = 0;
   let windOffset = 0;
+
+  document.addEventListener('mousemove', e => {
+    if (lastMX !== undefined) {
+      vx += (e.clientX - lastMX) * 3;
+      vy += (e.clientY - lastMY) * 3;
+    }
+    lastMX = e.clientX;
+    lastMY = e.clientY;
+  });
 
   function loop() {
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    // Constant wind force — always blowing left
-    const WIND = 14;
+    // Wind always blows left — no spring to cancel it out
+    vx -= 1.4;
 
-    // Spring toward real mouse position
-    vx += (mouseX - cx) * 0.13;
-    vy += (mouseY - cy) * 0.13;
+    // Damping (high enough to feel controllable, low enough wind wins at rest)
+    vx *= 0.91;
+    vy *= 0.88;
 
-    // Wind always blows left
-    vx -= WIND;
-
-    // Damping
-    vx *= 0.76;
-    vy *= 0.76;
+    // Vertical drift back toward center so cursor doesn't fly off vertically
+    vy += (H / 2 - cy) * 0.004;
 
     cx = Math.max(0, Math.min(W - 24, cx + vx));
     cy = Math.max(0, Math.min(H - 24, cy + vy));
