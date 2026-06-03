@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'fan-cursor',
+    title: 'Fan Cursor Keyboard',
+    sin: "You can't click keys — you aim a physics fan at them",
+    dateAdded: '2026-06-02',
+    credit: 'themutti',
+  },
+  {
     id: 'birthday-highlow',
     title: 'Birthday High-Low',
     sin: 'Binary-searching for information you already know',

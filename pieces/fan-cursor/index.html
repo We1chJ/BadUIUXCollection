@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fan Cursor Keyboard — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #e8e8e8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Glass footer pill ── */
+  #footer-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    font-size: 13px; white-space: nowrap; color: #fff;
+  }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg.gh { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin    { color: rgba(255,255,255,0.65); font-style: italic; }
+  .pill-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
+
+  /* ── Keyboard UI ── */
+  .keyboard-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  #text-display {
+    width: 500px;
+    height: 48px;
+    background: #fff;
+    border: 2px solid #aaa;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-size: 22px;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    color: #111;
+    overflow: hidden;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  #text-display::after {
+    content: '|';
+    animation: blink 1s step-end infinite;
+    color: #555;
+    margin-left: 1px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  #keyboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 500px;
+  }
+
+  .key {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 44px;
+    height: 44px;
+    background: #d0d0d0;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    box-shadow: 0 2px 0 #aaa;
+    transition: background 0.1s;
+  }
+
+  .key.hover {
+    background: #888;
+    color: #fff;
+    box-shadow: 0 1px 0 #666;
+    transform: translateY(1px);
+  }
+
+  .key.wide {
+    width: 96px;
+  }
+
+  /* ── Fan & cursor (fixed, over everything) ── */
+  #fan {
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    cursor: grab;
+    z-index: 500;
+    top: 0; left: 0;
+    transform-origin: center center;
+  }
+  #fan:active { cursor: grabbing; }
+
+  #fan-cursor {
+    position: fixed;
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+    z-index: 600;
+    top: 0; left: 0;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="keyboard-wrapper">
+  <div id="text-display"><span id="text"></span></div>
+  <div id="keyboard">
+    <div class="key" data-key="A">A</div>
+    <div class="key" data-key="B">B</div>
+    <div class="key" data-key="C">C</div>
+    <div class="key" data-key="D">D</div>
+    <div class="key" data-key="E">E</div>
+    <div class="key" data-key="F">F</div>
+    <div class="key" data-key="G">G</div>
+    <div class="key" data-key="H">H</div>
+    <div class="key" data-key="I">I</div>
+    <div class="key" data-key="J">J</div>
+    <div class="key" data-key="K">K</div>
+    <div class="key" data-key="L">L</div>
+    <div class="key" data-key="M">M</div>
+    <div class="key" data-key="N">N</div>
+    <div class="key" data-key="O">O</div>
+    <div class="key" data-key="P">P</div>
+    <div class="key" data-key="Q">Q</div>
+    <div class="key" data-key="R">R</div>
+    <div class="key" data-key="S">S</div>
+    <div class="key" data-key="T">T</div>
+    <div class="key" data-key="U">U</div>
+    <div class="key" data-key="V">V</div>
+    <div class="key" data-key="W">W</div>
+    <div class="key" data-key="X">X</div>
+    <div class="key" data-key="Y">Y</div>
+    <div class="key" data-key="Z">Z</div>
+    <div class="key" data-key="0">0</div>
+    <div class="key" data-key="1">1</div>
+    <div class="key" data-key="2">2</div>
+    <div class="key" data-key="3">3</div>
+    <div class="key" data-key="4">4</div>
+    <div class="key" data-key="5">5</div>
+    <div class="key" data-key="6">6</div>
+    <div class="key" data-key="7">7</div>
+    <div class="key" data-key="8">8</div>
+    <div class="key" data-key="9">9</div>
+    <div class="key wide" data-key=" ">Space</div>
+    <div class="key wide" id="clear-btn">Clear</div>
+  </div>
+</div>
+
+<!-- Fan: 3-blade propeller, blowing RIGHT at 0° rotation -->
+<svg id="fan" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- blade at 0° (right) -->
+  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#7799cc"/>
+  <!-- blade at 120° -->
+  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#6688bb" transform="rotate(120,50,50)"/>
+  <!-- blade at 240° -->
+  <path d="M50,50 Q68,30 86,42 Q82,56 50,50" fill="#5577aa" transform="rotate(240,50,50)"/>
+  <!-- hub -->
+  <circle cx="50" cy="50" r="9" fill="#334"/>
+  <circle cx="50" cy="50" r="4" fill="#112"/>
+</svg>
+
+<!-- Cursor: classic arrow pointing upper-left -->
+<svg id="fan-cursor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3,2 L3,18 L7,14 L10,21 L13,19.5 L10,12.5 L15,12.5 Z"
+        fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>
+
+<!-- Glass footer pill -->
+<div id="footer-bar">
+  <span class="pill-title">Fan Cursor Keyboard</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">UX sin: you can't click keys — aim a physics fan at them</span>
+  <span class="footer-sep"></span>
+  <span class="pill-credit">via themutti</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg class="gh" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
+</div>
+
+<script>
+const FAN_SPEED = 2;
+
+const textEl       = document.getElementById('text');
+const keyElems     = document.getElementsByClassName('key');
+const fanEl        = document.getElementById('fan');
+const cursorEl     = document.getElementById('fan-cursor');
+
+const fanPos    = { x: 80, y: window.innerHeight / 2 - 40 };
+const cursorPos = { x: window.innerWidth / 2 - 12, y: window.innerHeight / 2 - 80 };
+const cursorVel = { x: 0, y: 0 };
+let fanDragging = false;
+let lastKey = null;
+
+fanEl.addEventListener('dragstart', e => e.preventDefault());
+fanEl.addEventListener('mousedown', () => fanDragging = true);
+document.addEventListener('mouseup', () => fanDragging = false);
+document.addEventListener('mouseleave', () => fanDragging = false);
+
+document.addEventListener('mousemove', e => {
+  if (!fanDragging) return;
+  fanPos.x = e.clientX - fanEl.clientWidth / 2;
+  fanPos.y = e.clientY - fanEl.clientHeight / 2;
+  fanPos.x = Math.max(-fanEl.clientWidth / 2, Math.min(window.innerWidth  - fanEl.clientWidth  / 2, fanPos.x));
+  fanPos.y = Math.max(-fanEl.clientHeight / 2, Math.min(window.innerHeight - fanEl.clientHeight / 2, fanPos.y));
+});
+
+function blowCursor(dt) {
+  const dx = (cursorPos.x + cursorEl.clientWidth  / 2) - (fanPos.x + fanEl.clientWidth  / 2);
+  const dy = (cursorPos.y + cursorEl.clientHeight / 2) - (fanPos.y + fanEl.clientHeight / 2);
+  const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+  const force = Math.pow(FAN_SPEED / 10, 2) / dist;
+  cursorVel.x += force * (dx / dist) * dt;
+  cursorVel.y += force * (dy / dist) * dt;
+}
+
+function decelerateCursor(dt) {
+  const ax = 0.1 * cursorVel.x * cursorVel.x / 2;
+  const ay = 0.1 * cursorVel.y * cursorVel.y / 2;
+  if (Math.round(cursorVel.x * 1000) === 0) cursorVel.x = 0;
+  else cursorVel.x += ax * (cursorVel.x > 0 ? -1 : 1);
+  if (Math.round(cursorVel.y * 1000) === 0) cursorVel.y = 0;
+  else cursorVel.y += ay * (cursorVel.y > 0 ? -1 : 1);
+}
+
+function updateFan() {
+  fanEl.style.left = fanPos.x + 'px';
+  fanEl.style.top  = fanPos.y + 'px';
+  const dx = (cursorPos.x + cursorEl.clientWidth  / 2) - (fanPos.x + fanEl.clientWidth  / 2);
+  const dy = (cursorPos.y + cursorEl.clientHeight / 2) - (fanPos.y + fanEl.clientHeight / 2);
+  const rot = Math.atan2(dy, dx) * 180 / Math.PI;
+  fanEl.style.transform = `rotate(${rot}deg)`;
+}
+
+function updateCursor(dt) {
+  cursorPos.x += cursorVel.x * dt;
+  cursorPos.y += cursorVel.y * dt;
+  cursorPos.x = Math.max(0, Math.min(window.innerWidth  - cursorEl.clientWidth,  cursorPos.x));
+  cursorPos.y = Math.max(0, Math.min(window.innerHeight - cursorEl.clientHeight, cursorPos.y));
+  cursorEl.style.left = cursorPos.x + 'px';
+  cursorEl.style.top  = cursorPos.y + 'px';
+}
+
+function rectsOverlap(a, b) {
+  return a.top < b.bottom && a.bottom > b.top && a.left < b.right && a.right > b.left;
+}
+
+function handleCollisions() {
+  const cr = cursorEl.getBoundingClientRect();
+  for (const key of keyElems) {
+    if (rectsOverlap(cr, key.getBoundingClientRect())) {
+      if (key === lastKey) return;
+      lastKey?.classList.remove('hover');
+      lastKey = key;
+      key.classList.add('hover');
+      if (key.id === 'clear-btn') {
+        textEl.textContent = '';
+      } else {
+        textEl.textContent += key.dataset.key;
+      }
+      return;
+    }
+  }
+  lastKey?.classList.remove('hover');
+  lastKey = null;
+}
+
+let lastTime = null;
+function loop(time) {
+  requestAnimationFrame(loop);
+  if (!lastTime) { lastTime = time; return; }
+  const dt = time - lastTime;
+  lastTime = time;
+  blowCursor(dt);
+  decelerateCursor(dt);
+  updateFan();
+  updateCursor(dt);
+  handleCollisions();
+}
+requestAnimationFrame(loop);
+</script>
+
+<script>
+// Magnet effect
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>
