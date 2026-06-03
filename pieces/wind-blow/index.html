@@ -148,14 +148,16 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Horizontal: wind impulse physics. Vertical: tracks mouse directly, no physics.
+  // Safe zone: cursor tracks mouse directly, no forces.
+  // Wind zone: horizontal wind force applied to cx; cy always tracks mouse.
+  let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
   let lastMX;
-  let mouseY = window.innerHeight / 2;
   let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
   let vx = 0;
   let windOffset = 0;
 
   document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
     mouseY = e.clientY;
     if (lastMX !== undefined) {
       vx += (e.clientX - lastMX) * 3;
@@ -167,7 +169,6 @@
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    // Cursor Y tracks mouse exactly — no vertical force
     cy = mouseY;
 
     const windTop    = H * 0.40;
@@ -177,13 +178,12 @@
     if (inWindZone) {
       vx -= 1.4;
       vx *= 0.91;
+      cx = Math.max(0, Math.min(W - 24, cx + vx));
     } else {
-      // Safe zone: instant stop, no carry-over
+      // Safe zone: track mouse directly, reset velocity so wind starts fresh on re-entry
       vx = 0;
+      cx = mouseX;
     }
-
-    cx = Math.max(0, Math.min(W - 24, cx + vx));
-    // cy is already set above
 
     fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
