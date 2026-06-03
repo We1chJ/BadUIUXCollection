@@ -179,7 +179,7 @@
     clicks++;
     scale = Math.max(0.3, scale * 0.92);        // shrink slightly, floor at 30%
     btn.style.transform = `scale(${scale})`;
-    spawnDecoys(2 + clicks);                     // escalating batch each click
+    spawnDecoys(5 + clicks * 5);                 // escalating batch each click
     moveButton();
   });
 
