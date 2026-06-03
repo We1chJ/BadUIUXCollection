@@ -148,42 +148,49 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Safe zone: cursor tracks mouse directly, no forces.
-  // Wind zone: horizontal wind force applied to cx; cy always tracks mouse.
-  let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-  let lastMX;
+  // cx/cy are the authoritative cursor position. They are ONLY ever changed
+  // by += (hand movement deltas + wind momentum) — never assigned an absolute
+  // value — so the position is always continuous and never teleports.
   let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-  let vx = 0;
+  let pendingDX = 0, pendingDY = 0;   // unconsumed hand movement since last frame
+  let lastMX, lastMY;
+  let vx = 0;                          // wind momentum (horizontal only)
   let windOffset = 0;
 
   document.addEventListener('mousemove', e => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
     if (lastMX !== undefined) {
-      vx += (e.clientX - lastMX) * 3;
+      pendingDX += e.clientX - lastMX;
+      pendingDY += e.clientY - lastMY;
     }
     lastMX = e.clientX;
+    lastMY = e.clientY;
   });
 
   function loop() {
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    cy = mouseY;
+    // 1. Apply this frame's hand movement (1:1, both axes, every zone)
+    cx += pendingDX;
+    cy += pendingDY;
+    pendingDX = 0;
+    pendingDY = 0;
 
+    // 2. Wind momentum — gains force only inside the wind zone, decays outside
     const windTop    = H * 0.40;
     const windBottom = H * 0.60;
     const inWindZone = cy >= windTop && cy <= windBottom;
 
     if (inWindZone) {
-      vx -= 1.4;
-      vx *= 0.91;
-      cx = Math.max(0, Math.min(W - 24, cx + vx));
+      vx -= 1.4;        // wind pushes left
+      vx *= 0.91;       // air resistance
     } else {
-      // Safe zone: track mouse directly, reset velocity so wind starts fresh on re-entry
-      vx = 0;
-      cx = mouseX;
+      vx *= 0.8;        // no new force; existing momentum bleeds off smoothly
     }
+    cx += vx;           // applied every frame so there's never a snap
+
+    cx = Math.max(0, Math.min(W - 24, cx));
+    cy = Math.max(0, Math.min(H - 24, cy));
 
     fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
