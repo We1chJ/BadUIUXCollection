@@ -175,12 +175,24 @@
     btn.style.top  = y + 'px';
   }
 
+  // Re-randomize every decoy's offset so the whole swarm teleports at once —
+  // your eye can't trace which cursor is the real one through the jump.
+  function reshuffleDecoys() {
+    const W = window.innerWidth, H = window.innerHeight;
+    for (const d of decoys) {
+      d.ox = Math.random() * (W - 30) - mx;
+      d.oy = Math.random() * (H - 30) - my;
+    }
+  }
+
   btn.addEventListener('click', () => {
     clicks++;
     scale = Math.max(0.3, scale * 0.92);        // shrink slightly, floor at 30%
     btn.style.transform = `scale(${scale})`;
+    reshuffleDecoys();                           // scatter existing cursors anew
     spawnDecoys(5 + clicks * 5);                 // escalating batch each click
     moveButton();
+    place();
   });
 
   place();
