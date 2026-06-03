@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'scattered-keyboard',
+    title: 'Scattered Keyboard',
+    sin: 'Navigate randomly scattered keys with arrow keys to type anything',
+    dateAdded: '2026-06-03',
+    credit: 'Reddit',
+  },
+  {
     id: 'fan-cursor',
     title: 'Fan Cursor Keyboard',
     sin: "You can't click keys — you aim a physics fan at them",
