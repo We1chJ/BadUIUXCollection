@@ -173,10 +173,65 @@ const TRAVEL = 90;          // px of vertical handle travel
 let handleTop = 0;          // current handle offset (0 = up, TRAVEL = down)
 let vol = 5;                // volume %
 
+// ── Web Audio: the pump controls THIS audio's loudness ──
+// (a page can't touch the OS/device volume — browsers forbid it)
+let actx = null, master = null, padGain = null;
+
+function initAudio() {
+  if (actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+
+  master = actx.createGain();
+  master.gain.value = vol / 100;
+  master.connect(actx.destination);
+
+  // Soft looping pad so there's always something to hear at the current volume
+  padGain = actx.createGain();
+  padGain.gain.value = 0.07;
+  padGain.connect(master);
+  const lp = actx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 700;
+  lp.connect(padGain);
+  [220, 277.18, 329.63].forEach((f, i) => {     // soft A-major-ish triad
+    const o = actx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = f;
+    o.detune.value = (i - 1) * 6;
+    o.connect(lp);
+    o.start();
+  });
+}
+
+// One "psssht" air-pump whoosh — filtered noise burst with a fast envelope
+function puff() {
+  if (!actx) return;
+  const dur = 0.2;
+  const buf = actx.createBuffer(1, Math.floor(actx.sampleRate * dur), actx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+  const src = actx.createBufferSource();
+  src.buffer = buf;
+  const bp = actx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.Q.value = 0.7;
+  const g = actx.createGain();
+  const t = actx.currentTime;
+
+  bp.frequency.setValueAtTime(950, t);
+  bp.frequency.exponentialRampToValueAtTime(280, t + dur);   // downward whoosh
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.9, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+  src.connect(bp); bp.connect(g); g.connect(master);
+  src.start(t); src.stop(t + dur);
+}
+
 function render() {
   vol = Math.max(0, Math.min(100, vol));
   fill.style.height = vol + '%';
   volEl.textContent = Math.round(vol);
+  if (master) master.gain.value = vol / 100;   // gauge % == actual loudness
 }
 
 function setHandle(t) {
@@ -186,12 +241,16 @@ function setHandle(t) {
 
 // ── Drag the handle (vertical only) — down-strokes pump air in ──
 let dragging = false, startY = 0, startTop = 0, lastTop = 0;
+let strokeDist = 0;                          // accumulated down-travel since last puff
 
 piston.addEventListener('mousedown', e => {
+  initAudio();                               // first user gesture unlocks audio
+  if (actx && actx.state === 'suspended') actx.resume();
   dragging = true;
   startY = e.clientY;
   startTop = handleTop;
   lastTop = handleTop;
+  strokeDist = 0;
   piston.style.transition = 'none';
   e.preventDefault();
 });
@@ -201,7 +260,11 @@ window.addEventListener('mousemove', e => {
   const next = startTop + (e.clientY - startY);
   setHandle(next);
   const down = handleTop - lastTop;          // positive = pushing down
-  if (down > 0) vol += down * 0.16;          // only down-strokes add volume
+  if (down > 0) {
+    vol += down * 0.16;                      // only down-strokes add volume
+    strokeDist += down;
+    if (strokeDist >= 22) { puff(); strokeDist = 0; }   // one whoosh per stroke chunk
+  }
   lastTop = handleTop;
   render();
 });
