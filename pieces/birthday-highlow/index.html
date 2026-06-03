@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Birthday High-Low — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, serif;
+    background: #f5f5f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; font-family: Inter, sans-serif; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Glass footer pill ── */
+  #footer-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    font-family: Inter, sans-serif; font-size: 13px; white-space: nowrap; color: #fff;
+  }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin    { color: rgba(255,255,255,0.65); font-style: italic; }
+  .pill-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
+
+  /* ── Game UI ── */
+  .game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 48px 24px 100px;
+  }
+
+  .game h1 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #111;
+  }
+
+  .game-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 700px;
+  }
+
+  .guess-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+    font-family: monospace;
+  }
+
+  .guess-list.left { text-align: right; padding-right: 20px; }
+  .guess-list.right { text-align: left; padding-left: 20px; }
+
+  .center-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .center-date {
+    font-size: 28px;
+    font-weight: bold;
+    color: #111;
+    min-width: 200px;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 4px 10px;
+    border: 1px solid #888;
+    border-radius: 3px;
+    background: #e8e8e8;
+    cursor: pointer;
+    color: #222;
+    font-family: Georgia, serif;
+  }
+  .btn:hover { background: #d4d4d4; }
+  .btn:active { background: #bbb; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  .guess-count {
+    font-size: 16px;
+    color: #333;
+    font-family: Georgia, serif;
+  }
+
+  .win-msg {
+    font-size: 22px;
+    font-weight: bold;
+    color: #111;
+    text-align: center;
+  }
+
+  .win-msg .sub {
+    font-size: 15px;
+    font-weight: normal;
+    color: #555;
+    margin-top: 6px;
+  }
+
+  .replay-btn {
+    font-size: 14px;
+    padding: 6px 18px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-family: Georgia, serif;
+  }
+  .replay-btn:hover { background: #eee; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="game">
+  <h1>Is this your birthday?</h1>
+
+  <div class="game-row">
+    <div class="guess-list left" id="left-list"></div>
+    <div class="center-controls">
+      <button class="btn" id="btn-earlier" onclick="guess('earlier')">Earlier</button>
+      <div class="center-date" id="current-date"></div>
+      <button class="btn" id="btn-later" onclick="guess('later')">Later</button>
+    </div>
+    <div class="guess-list right" id="right-list"></div>
+  </div>
+
+  <div class="guess-count" id="guess-count">0 Guesses</div>
+
+  <div class="win-msg" id="win-msg" style="display:none">
+    <div id="win-text"></div>
+    <div class="sub">It only took <span id="win-count"></span> guesses to find your own birthday.</div>
+    <br>
+    <button class="replay-btn" onclick="init()">Try Again</button>
+  </div>
+</div>
+
+<!-- Glass footer pill -->
+<div id="footer-bar">
+  <span class="pill-title">Birthday High-Low</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">UX sin: binary-searching for information you already know</span>
+  <span class="footer-sep"></span>
+  <span class="pill-credit">via Nifty Octopus</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
+</div>
+
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmt(ts) {
+  const d = new Date(ts);
+  return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2,'0')} ${d.getUTCFullYear()}`;
+}
+
+function midTs(lo, hi) {
+  return lo + Math.floor((hi - lo) / 2);
+}
+
+const MIN_TS = Date.UTC(1920, 0, 1);
+const MAX_TS = Date.UTC(2010, 11, 31);
+const ONE_DAY = 86400000;
+
+let lo, hi, current, guessCount, earlierList, laterList, won;
+
+function init() {
+  lo = MIN_TS;
+  hi = MAX_TS;
+  current = midTs(lo, hi);
+  guessCount = 0;
+  earlierList = [];
+  laterList = [];
+  won = false;
+
+  document.getElementById('win-msg').style.display = 'none';
+  document.getElementById('btn-earlier').disabled = false;
+  document.getElementById('btn-later').disabled = false;
+  render();
+}
+
+function render() {
+  document.getElementById('current-date').textContent = fmt(current);
+  document.getElementById('guess-count').textContent =
+    guessCount + (guessCount === 1 ? ' Guess' : ' Guesses');
+
+  const leftEl = document.getElementById('left-list');
+  const rightEl = document.getElementById('right-list');
+
+  const showLeft = earlierList.slice(-5);
+  const showRight = laterList.slice(-5);
+
+  leftEl.innerHTML = showLeft.map(ts => `<div>${fmt(ts)}</div>`).join('');
+  rightEl.innerHTML = showRight.map(ts => `<div>${fmt(ts)}</div>`).join('');
+}
+
+function guess(dir) {
+  if (won) return;
+  guessCount++;
+
+  if (dir === 'earlier') {
+    earlierList.push(current);
+    hi = current - ONE_DAY;
+  } else {
+    laterList.push(current);
+    lo = current + ONE_DAY;
+  }
+
+  if (lo > hi) {
+    // Converged — the last direction pressed determines the found date
+    const found = dir === 'earlier' ? current - ONE_DAY + ONE_DAY : current;
+    // Actually the converged answer is the boundary
+    const answer = dir === 'earlier' ? hi + ONE_DAY : lo - ONE_DAY;
+    showWin(guessCount);
+    return;
+  }
+
+  const next = midTs(lo, hi);
+
+  if (next === current) {
+    showWin(guessCount);
+    return;
+  }
+
+  current = next;
+  render();
+}
+
+function showWin(count) {
+  won = true;
+  document.getElementById('btn-earlier').disabled = true;
+  document.getElementById('btn-later').disabled = true;
+  document.getElementById('win-text').textContent = `Found it: ${fmt(current)}`;
+  document.getElementById('win-count').textContent = count;
+  document.getElementById('win-msg').style.display = 'block';
+  render();
+}
+
+init();
+</script>
+
+<script>
+// Magnet effect
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>

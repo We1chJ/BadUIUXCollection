@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'birthday-highlow',
+    title: 'Birthday High-Low',
+    sin: 'Binary-searching for information you already know',
+    dateAdded: '2026-06-02',
+    credit: 'Nifty Octopus',
+  },
+  {
     id: 'unsubscribe-cursor',
     title: 'Unsubscribe',
     sin: "Custom cursor communicates contempt for the user's intent",
