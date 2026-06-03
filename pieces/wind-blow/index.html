@@ -175,10 +175,12 @@
 
     if (inWindZone) {
       vx -= 1.4;
+      vx *= 0.91;
+    } else {
+      // Safe zone: bleed off horizontal velocity immediately
+      vx *= 0.2;
     }
 
-    // Damping
-    vx *= 0.91;
     vy *= 0.88;
 
     // Gentle vertical pull back toward center (keeps cursor from drifting off vertically)
