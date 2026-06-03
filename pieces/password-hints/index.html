@@ -80,9 +80,10 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     transition: transform 0.1s;
   }
-  .dot.arrow  { background: #444; font-size: 20px; }
-  .dot.ok     { background: #3db552; }
-  .dot.bad    { background: #e03b3b; }
+  .dot.arrow     { background: #444; font-size: 20px; }
+  .dot.ok        { background: #3db552; }
+  .dot.misplaced { background: #e6a817; }
+  .dot.bad       { background: #e03b3b; }
 
   /* ── Submit ── */
   #submit-btn {
@@ -169,8 +170,15 @@
     const val = input.value;
     let html = '<span class="dot arrow">→</span>';
     for (let i = 0; i < val.length; i++) {
-      const correct = val[i] === SECRET[i];
-      html += `<span class="dot ${correct ? 'ok' : 'bad'}">${correct ? '✓' : '✗'}</span>`;
+      let cls, sym;
+      if (val[i] === SECRET[i]) {
+        cls = 'ok'; sym = '✓';
+      } else if (SECRET.includes(val[i])) {
+        cls = 'misplaced'; sym = '✓';
+      } else {
+        cls = 'bad'; sym = '✗';
+      }
+      html += `<span class="dot ${cls}">${sym}</span>`;
     }
     indicators.innerHTML = html;
     result.className = '';
