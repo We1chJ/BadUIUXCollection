@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'password-hints',
+    title: 'Helpful Password',
+    sin: 'Reveals which characters are correct position by position',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'slippery-yes',
     title: 'Slippery Yes',
     sin: 'Confirmation button swaps places whenever you hover over it',
