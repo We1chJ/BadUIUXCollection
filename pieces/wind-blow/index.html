@@ -54,10 +54,10 @@
     user-select: none;
   }
 
-  /* ── Fan — fixed to right edge, vertically centered ── */
+  /* ── Fan — fixed right side, closer to center, flipped to face left ── */
   #fan-wrap {
     position: fixed;
-    right: -20px;
+    right: 12%;
     top: 50%;
     transform: translateY(-50%);
     width: 200px;
@@ -68,6 +68,7 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    transform: scaleX(-1);
   }
 
   /* ── Fake cursor ── */
@@ -158,17 +159,15 @@
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    // Wind force: grows as cursor moves right toward the fan
-    // cx/W goes 0→1; square it so it ramps up fast near the fan
-    const rightness = Math.max(0, cx / W);
-    const force = 5 + Math.pow(rightness, 1.8) * 28;
+    // Constant wind force — always blowing left
+    const WIND = 14;
 
     // Spring toward real mouse position
     vx += (mouseX - cx) * 0.13;
     vy += (mouseY - cy) * 0.13;
 
-    // Wind blows left
-    vx -= force;
+    // Wind always blows left
+    vx -= WIND;
 
     // Damping
     vx *= 0.76;
@@ -179,10 +178,10 @@
 
     fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
-    // Draw wind waves — always scrolling, intensity scales with rightness
-    windOffset += 0.05 + rightness * 0.14;
-    const amplitude = 6 + rightness * 8;
-    const alpha     = 0.3 + rightness * 0.5;
+    // Draw wind waves — constant, strong
+    windOffset += 0.12;
+    const amplitude = 10;
+    const alpha     = 0.6;
     const numLines  = 20;
     const spacing   = H / numLines;
 
