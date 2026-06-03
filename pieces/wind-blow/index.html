@@ -169,8 +169,8 @@
     const H = window.innerHeight;
 
     // Safe zones: top 22% and bottom 22% — no wind
-    const windTop    = H * 0.22;
-    const windBottom = H * 0.78;
+    const windTop    = H * 0.40;
+    const windBottom = H * 0.60;
     const inWindZone = cy >= windTop && cy <= windBottom;
 
     if (inWindZone) {
