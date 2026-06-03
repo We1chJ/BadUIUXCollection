@@ -30,7 +30,7 @@
   }
   .back:hover { background: #000; color: #fff; }
 
-  /* ── Wind canvas (full viewport) ── */
+  /* ── Wind canvas ── */
   #wind-canvas {
     position: fixed;
     inset: 0;
@@ -38,52 +38,45 @@
     z-index: 0;
   }
 
-  /* ── Scene: button + fan ── */
-  #scene {
+  /* ── Unsubscribe button — centered ── */
+  #unsub-btn {
     position: relative;
     z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 0;
-  }
-
-  /* ── Unsubscribe button ── */
-  #unsub-btn {
-    padding: 14px 28px;
+    padding: 16px 36px;
     background: #e05252;
     color: #fff;
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 700;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: none;
-    box-shadow: 0 4px 16px rgba(224,82,82,0.35);
+    box-shadow: 0 4px 20px rgba(224,82,82,0.4);
     user-select: none;
-    white-space: nowrap;
   }
 
-  /* ── Fan ── */
+  /* ── Fan — fixed to right edge, vertically centered ── */
   #fan-wrap {
-    position: relative;
-    width: 180px;
-    height: 220px;
-    flex-shrink: 0;
+    position: fixed;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200px;
+    height: 240px;
+    z-index: 10;
   }
   #fan-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* spinning blades are baked into the png, so we just show it */
   }
 
   /* ── Fake cursor ── */
   #fake-cursor {
     position: fixed;
     top: 0; left: 0;
-    width: 20px; height: 20px;
+    width: 24px; height: 24px;
     pointer-events: none;
     z-index: 9999;
-    /* CSS arrow cursor shape */
   }
   #fake-cursor svg {
     width: 24px; height: 24px;
@@ -117,25 +110,20 @@
 
 <a class="back" href="../../gallery.html">← Gallery</a>
 
-<!-- Wind wave canvas -->
 <canvas id="wind-canvas"></canvas>
 
-<!-- Scene -->
-<div id="scene">
-  <button id="unsub-btn">Unsubscribe</button>
-  <div id="fan-wrap">
-    <img id="fan-img" src="../fan-cursor/fan.png" alt="fan"/>
-  </div>
+<button id="unsub-btn">Unsubscribe</button>
+
+<div id="fan-wrap">
+  <img id="fan-img" src="../fan-cursor/fan.png" alt="fan"/>
 </div>
 
-<!-- Fake cursor -->
 <div id="fake-cursor">
-  <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path d="M4 2L4 18L8 14L11 21L13.5 20L10.5 13L16 13L4 2Z" fill="#111" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
   </svg>
 </div>
 
-<!-- Glass footer pill -->
 <div id="footer-bar">
   <span class="pill-title">Wind Blow</span>
   <span class="footer-sep"></span>
@@ -148,95 +136,69 @@
 
 <script>
 (function () {
-  /* ── Wind canvas ── */
-  const canvas = document.getElementById('wind-canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas     = document.getElementById('wind-canvas');
+  const ctx        = canvas.getContext('2d');
+  const fakeCursor = document.getElementById('fake-cursor');
 
-  function resizeCanvas() {
+  function resize() {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
   }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+  resize();
+  window.addEventListener('resize', resize);
 
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
+  let cx = mouseX, cy = mouseY, vx = 0, vy = 0;
   let windOffset = 0;
 
-  function drawWind(windPower) {
-    const W = canvas.width, H = canvas.height;
+  function loop() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    // Wind force: grows as cursor moves right toward the fan
+    // cx/W goes 0→1; square it so it ramps up fast near the fan
+    const rightness = Math.max(0, cx / W);
+    const force = 5 + Math.pow(rightness, 1.8) * 28;
+
+    // Spring toward real mouse position
+    vx += (mouseX - cx) * 0.13;
+    vy += (mouseY - cy) * 0.13;
+
+    // Wind blows left
+    vx -= force;
+
+    // Damping
+    vx *= 0.76;
+    vy *= 0.76;
+
+    cx = Math.max(0, Math.min(W - 24, cx + vx));
+    cy = Math.max(0, Math.min(H - 24, cy + vy));
+
+    fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
+
+    // Draw wind waves — always scrolling, intensity scales with rightness
+    windOffset += 0.05 + rightness * 0.14;
+    const amplitude = 6 + rightness * 8;
+    const alpha     = 0.3 + rightness * 0.5;
+    const numLines  = 20;
+    const spacing   = H / numLines;
+
     ctx.clearRect(0, 0, W, H);
-
-    const numLines = 18;
-    const spacing = H / numLines;
-    const amplitude = 8 + windPower * 4;
-    const alpha = 0.25 + windPower * 0.45;
-
-    ctx.strokeStyle = `rgba(80, 160, 230, ${alpha})`;
+    ctx.strokeStyle = `rgba(70, 150, 225, ${alpha})`;
     ctx.lineWidth = 1.8;
 
     for (let row = 0; row < numLines; row++) {
       const baseY = row * spacing + spacing / 2;
       ctx.beginPath();
-      for (let x = 0; x <= W + 60; x += 3) {
-        const y = baseY + Math.sin((x / 55) - windOffset + row * 0.6) * amplitude;
+      for (let x = 0; x <= W; x += 3) {
+        const y = baseY + Math.sin((x / 60) - windOffset + row * 0.5) * amplitude;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
-  }
-
-  /* ── Fake cursor physics ── */
-  const fakeCursor = document.getElementById('fake-cursor');
-  const scene      = document.getElementById('scene');
-
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
-  let cx = mouseX, cy = mouseY;
-  let vx = 0, vy = 0;
-
-  document.addEventListener('mousemove', e => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-  });
-
-  function getFanLeft() {
-    const r = scene.getBoundingClientRect();
-    // fan is on the right side of the scene
-    return r.right - 180; // approx left edge of fan image
-  }
-
-  let windPower = 0;
-
-  function loop() {
-    const fanLeft = getFanLeft();
-    // How close is the fake cursor to the fan (horizontally)?
-    const dist = Math.max(0, fanLeft - cx);
-    const proximity = Math.max(0, 1 - dist / (window.innerWidth * 0.7));
-    windPower += (proximity - windPower) * 0.08;
-
-    // Spring toward real mouse
-    vx += (mouseX - cx) * 0.12;
-    vy += (mouseY - cy) * 0.12;
-
-    // Wind force — blows left, proportional to proximity
-    const force = Math.pow(windPower, 1.4) * 22;
-    vx -= force;
-
-    // Damping
-    vx *= 0.78;
-    vy *= 0.78;
-
-    cx += vx;
-    cy += vy;
-
-    // Clamp inside viewport
-    cx = Math.max(0, Math.min(window.innerWidth  - 24, cx));
-    cy = Math.max(0, Math.min(window.innerHeight - 24, cy));
-
-    fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
-
-    // Scroll wind waves leftward — faster when more wind
-    windOffset += 0.04 + windPower * 0.12;
-    drawWind(windPower);
 
     requestAnimationFrame(loop);
   }
