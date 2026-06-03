@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wind Blow — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    background: #e8f4fd;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;
+    overflow: hidden;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 200;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+    cursor: none;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Wind canvas (full viewport) ── */
+  #wind-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Scene: button + fan ── */
+  #scene {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ── Unsubscribe button ── */
+  #unsub-btn {
+    padding: 14px 28px;
+    background: #e05252;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: none;
+    box-shadow: 0 4px 16px rgba(224,82,82,0.35);
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  /* ── Fan ── */
+  #fan-wrap {
+    position: relative;
+    width: 180px;
+    height: 220px;
+    flex-shrink: 0;
+  }
+  #fan-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* spinning blades are baked into the png, so we just show it */
+  }
+
+  /* ── Fake cursor ── */
+  #fake-cursor {
+    position: fixed;
+    top: 0; left: 0;
+    width: 20px; height: 20px;
+    pointer-events: none;
+    z-index: 9999;
+    /* CSS arrow cursor shape */
+  }
+  #fake-cursor svg {
+    width: 24px; height: 24px;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.4));
+  }
+
+  /* ── Glass footer pill ── */
+  #footer-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    font-family: Inter, sans-serif; font-size: 13px; white-space: nowrap; color: #fff;
+    cursor: none;
+  }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin   { color: rgba(255,255,255,0.65); font-style: italic; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<!-- Wind wave canvas -->
+<canvas id="wind-canvas"></canvas>
+
+<!-- Scene -->
+<div id="scene">
+  <button id="unsub-btn">Unsubscribe</button>
+  <div id="fan-wrap">
+    <img id="fan-img" src="../fan-cursor/fan.png" alt="fan"/>
+  </div>
+</div>
+
+<!-- Fake cursor -->
+<div id="fake-cursor">
+  <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 2L4 18L8 14L11 21L13.5 20L10.5 13L16 13L4 2Z" fill="#111" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<!-- Glass footer pill -->
+<div id="footer-bar">
+  <span class="pill-title">Wind Blow</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">Fan blows cursor away from Unsubscribe</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
+</div>
+
+<script>
+(function () {
+  /* ── Wind canvas ── */
+  const canvas = document.getElementById('wind-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  let windOffset = 0;
+
+  function drawWind(windPower) {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const numLines = 18;
+    const spacing = H / numLines;
+    const amplitude = 8 + windPower * 4;
+    const alpha = 0.25 + windPower * 0.45;
+
+    ctx.strokeStyle = `rgba(80, 160, 230, ${alpha})`;
+    ctx.lineWidth = 1.8;
+
+    for (let row = 0; row < numLines; row++) {
+      const baseY = row * spacing + spacing / 2;
+      ctx.beginPath();
+      for (let x = 0; x <= W + 60; x += 3) {
+        const y = baseY + Math.sin((x / 55) - windOffset + row * 0.6) * amplitude;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  /* ── Fake cursor physics ── */
+  const fakeCursor = document.getElementById('fake-cursor');
+  const scene      = document.getElementById('scene');
+
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let cx = mouseX, cy = mouseY;
+  let vx = 0, vy = 0;
+
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  function getFanLeft() {
+    const r = scene.getBoundingClientRect();
+    // fan is on the right side of the scene
+    return r.right - 180; // approx left edge of fan image
+  }
+
+  let windPower = 0;
+
+  function loop() {
+    const fanLeft = getFanLeft();
+    // How close is the fake cursor to the fan (horizontally)?
+    const dist = Math.max(0, fanLeft - cx);
+    const proximity = Math.max(0, 1 - dist / (window.innerWidth * 0.7));
+    windPower += (proximity - windPower) * 0.08;
+
+    // Spring toward real mouse
+    vx += (mouseX - cx) * 0.12;
+    vy += (mouseY - cy) * 0.12;
+
+    // Wind force — blows left, proportional to proximity
+    const force = Math.pow(windPower, 1.4) * 22;
+    vx -= force;
+
+    // Damping
+    vx *= 0.78;
+    vy *= 0.78;
+
+    cx += vx;
+    cy += vy;
+
+    // Clamp inside viewport
+    cx = Math.max(0, Math.min(window.innerWidth  - 24, cx));
+    cy = Math.max(0, Math.min(window.innerHeight - 24, cy));
+
+    fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
+
+    // Scroll wind waves leftward — faster when more wind
+    windOffset += 0.04 + windPower * 0.12;
+    drawWind(windPower);
+
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+})();
+</script>
+
+<script>
+// Magnet effect on footer
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>

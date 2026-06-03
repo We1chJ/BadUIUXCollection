@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'wind-blow',
+    title: 'Wind Blow',
+    sin: 'Fan blows cursor away from the Unsubscribe button',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'password-hints',
     title: 'Helpful Password',
     sin: 'Reveals which characters are correct position by position',
