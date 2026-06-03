@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'slippery-yes',
+    title: 'Slippery Yes',
+    sin: 'Confirmation button swaps places whenever you hover over it',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'scattered-keyboard',
     title: 'Scattered Keyboard',
     sin: 'Navigate randomly scattered keys with arrow keys to type anything',

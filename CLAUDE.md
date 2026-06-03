@@ -19,6 +19,7 @@ Bad design here is **intentional and crafted**. When building a piece:
 - **Only add a piece to `pieces/registry.js` when `pieces/{id}/index.html` actually exists.** No placeholders or coming-soon entries.
 - The gallery renders every entry in the registry — keep the registry honest.
 - **When adding a new piece, read `pieces/registry.js` first and match the exact fields and format of the existing entries.** Do not add fields that aren't already present in the file.
+- **After adding a new piece, always `git add`, `git commit`, and `git push` without waiting to be asked.**
 
 ## Piece HTML Template
 
