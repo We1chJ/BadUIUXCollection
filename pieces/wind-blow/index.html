@@ -168,14 +168,20 @@
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    // Wind always blows left — no spring to cancel it out
-    vx -= 1.4;
+    // Safe zones: top 22% and bottom 22% — no wind
+    const windTop    = H * 0.22;
+    const windBottom = H * 0.78;
+    const inWindZone = cy >= windTop && cy <= windBottom;
 
-    // Damping (high enough to feel controllable, low enough wind wins at rest)
+    if (inWindZone) {
+      vx -= 1.4;
+    }
+
+    // Damping
     vx *= 0.91;
     vy *= 0.88;
 
-    // Vertical drift back toward center so cursor doesn't fly off vertically
+    // Gentle vertical pull back toward center (keeps cursor from drifting off vertically)
     vy += (H / 2 - cy) * 0.004;
 
     cx = Math.max(0, Math.min(W - 24, cx + vx));
@@ -183,22 +189,21 @@
 
     fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
-    // Draw wind waves — constant, strong
+    // Draw waves only in the wind zone
     windOffset += 0.12;
-    const amplitude = 10;
-    const alpha     = 0.6;
-    const numLines  = 20;
-    const spacing   = H / numLines;
-
     ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = `rgba(70, 150, 225, ${alpha})`;
+    ctx.strokeStyle = `rgba(70, 150, 225, 0.6)`;
     ctx.lineWidth = 1.8;
 
+    const zoneHeight = windBottom - windTop;
+    const numLines   = 16;
+    const spacing    = zoneHeight / numLines;
+
     for (let row = 0; row < numLines; row++) {
-      const baseY = row * spacing + spacing / 2;
+      const baseY = windTop + row * spacing + spacing / 2;
       ctx.beginPath();
       for (let x = 0; x <= W; x += 3) {
-        const y = baseY + Math.sin((x / 60) - windOffset + row * 0.5) * amplitude;
+        const y = baseY + Math.sin((x / 60) - windOffset + row * 0.5) * 10;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
