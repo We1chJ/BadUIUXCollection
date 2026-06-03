@@ -148,27 +148,28 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Mouse movement adds impulse; mouse position does NOT anchor the cursor.
-  // This means wind acts freely when the mouse is still.
-  let lastMX, lastMY;
+  // Horizontal: wind impulse physics. Vertical: tracks mouse directly, no physics.
+  let lastMX;
+  let mouseY = window.innerHeight / 2;
   let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-  let vx = 0, vy = 0;
+  let vx = 0;
   let windOffset = 0;
 
   document.addEventListener('mousemove', e => {
+    mouseY = e.clientY;
     if (lastMX !== undefined) {
       vx += (e.clientX - lastMX) * 3;
-      vy += (e.clientY - lastMY) * 3;
     }
     lastMX = e.clientX;
-    lastMY = e.clientY;
   });
 
   function loop() {
     const W = window.innerWidth;
     const H = window.innerHeight;
 
-    // Safe zones: top 22% and bottom 22% — no wind
+    // Cursor Y tracks mouse exactly — no vertical force
+    cy = mouseY;
+
     const windTop    = H * 0.40;
     const windBottom = H * 0.60;
     const inWindZone = cy >= windTop && cy <= windBottom;
@@ -177,17 +178,12 @@
       vx -= 1.4;
       vx *= 0.91;
     } else {
-      // Safe zone: bleed off horizontal velocity immediately
-      vx *= 0.2;
+      // Safe zone: instant stop, no carry-over
+      vx = 0;
     }
 
-    vy *= 0.88;
-
-    // Gentle vertical pull back toward center (keeps cursor from drifting off vertically)
-    vy += (H / 2 - cy) * 0.004;
-
     cx = Math.max(0, Math.min(W - 24, cx + vx));
-    cy = Math.max(0, Math.min(H - 24, cy + vy));
+    // cy is already set above
 
     fakeCursor.style.transform = `translate(${cx}px, ${cy}px)`;
 
