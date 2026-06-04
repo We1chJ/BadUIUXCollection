@@ -105,8 +105,8 @@
   const btn    = document.getElementById('unsub');
   const result = document.getElementById('result');
 
-  const R        = 170;   // repulsion radius (px)
-  const STRENGTH = 7;     // push force at point-blank range
+  const R        = 200;   // repulsion radius (px)
+  const STRENGTH = 16;    // push force at point-blank range
   const FRICTION = 0.86;  // velocity damping per frame
   const BOUNCE   = 0.55;  // energy kept on wall hit
 
@@ -129,7 +129,8 @@
     const dx = bx - mx, dy = by - my;
     const dist = Math.hypot(dx, dy) || 0.0001;
     if (dist < R) {
-      const f = ((R - dist) / R) * STRENGTH;
+      const closeness = (R - dist) / R;        // 0 at edge, 1 point-blank
+      const f = closeness * closeness * STRENGTH;  // squared falloff — slams when close
       vx += (dx / dist) * f;
       vy += (dy / dist) * f;
     }
