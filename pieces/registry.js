@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'magnet-unsubscribe',
+    title: 'Magnet Unsubscribe',
+    sin: 'The button repels the cursor and can never be touched',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'dice-volume',
     title: 'Dice Volume',
     sin: 'Set the volume by rolling sixteen dice and summing them',
