@@ -153,11 +153,15 @@
   const BAR_LEN = BAR_X1 - BAR_X0;
 
   // ── Physics ──
-  const THETA = 65 * Math.PI / 180;  // launch angle
-  const G = 2000;                    // gravity (px/s^2)
-  const V_MAX = 970;                 // full-charge speed (lands at bar end)
-  const V_MIN = 220;                 // a tap still lobs it a little
-  const CHARGE_MS = 1100;            // time to reach full charge
+  const THETA_MIN = 25 * Math.PI / 180;   // aim at zero charge
+  const THETA_MAX = 68 * Math.PI / 180;   // aim at full charge (cannon tilts up)
+  const G = 2000;                         // gravity (px/s^2)
+  const V_MIN = 220;                      // a tap still lobs it a little
+  // full-charge speed calibrated so it lands at the far end of the bar
+  const V_MAX = Math.sqrt((BAR_X1 - LX) * G / Math.sin(2 * THETA_MAX));
+  const CHARGE_MS = 1100;                 // time to reach full charge
+
+  const angleFor = p => THETA_MIN + p * (THETA_MAX - THETA_MIN);
 
   let charging = false, chargeStart = 0, power = 0;
   let flying = false, px = LX, py = LY, vx = 0, vy = 0;
@@ -190,8 +194,9 @@
     charging = false;
     meter.classList.remove('on');
     const v = V_MIN + power * (V_MAX - V_MIN);
-    vx = v * Math.cos(THETA);
-    vy = -v * Math.sin(THETA);       // upward (screen y grows downward)
+    const theta = angleFor(power);   // launch angle = the cannon's current tilt
+    vx = v * Math.cos(theta);
+    vy = -v * Math.sin(theta);       // upward (screen y grows downward)
     px = LX; py = LY;
     flying = true;
     power = 0;
@@ -207,9 +212,10 @@
       power = Math.min(1, (now - chargeStart) / CHARGE_MS);
       meterFill.style.width = (power * 100) + '%';
       const s = 1 + power * 0.12;
-      cannon.style.transform = `scale(${s})`;
+      const deg = angleFor(power) * 180 / Math.PI;     // tilt up with charge
+      cannon.style.transform = `rotate(${-deg}deg) scale(${s})`;
     } else if (!flying) {
-      cannon.style.transform = 'scale(1)';
+      cannon.style.transform = 'rotate(0deg) scale(1)'; // rest flat
     }
 
     if (flying) {
