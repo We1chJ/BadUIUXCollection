@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Seesaw Volume — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #222;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Layout ── */
+  .rig { display: flex; align-items: center; gap: 40px; }
+  .readout { font-size: 34px; font-weight: 700; font-family: Georgia, 'Times New Roman', serif; }
+
+  /* ── Seesaw beam ── */
+  .stage {
+    width: 380px; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .beam {
+    position: relative;
+    width: 360px; height: 60px;
+    background: linear-gradient(180deg, #fdfdfd 0%, #e4e4e4 45%, #cfcfcf 100%);
+    border: 1px solid #b5b5b5;
+    border-radius: 7px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.8);
+    cursor: grab;
+    will-change: transform;
+  }
+  .beam:active { cursor: grabbing; }
+  /* the groove the bubble rides in */
+  .groove {
+    position: absolute; left: 24px; right: 24px; top: 50%;
+    height: 6px; transform: translateY(-50%);
+    background: linear-gradient(180deg, #9a9a9a, #c9c9c9);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
+  /* the selection bubble */
+  .bubble {
+    position: absolute; top: 50%; left: 0;
+    width: 22px; height: 22px;
+    margin-top: -11px; margin-left: -11px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #d8d8d8 70%, #b0b0b0);
+    border: 1px solid #9a9a9a;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    pointer-events: none;
+    will-change: left;
+  }
+
+  /* ── Glass footer pill ── */
+  #footer-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    font-family: Inter, sans-serif; font-size: 13px; white-space: nowrap; color: #fff;
+  }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin    { color: rgba(255,255,255,0.65); font-style: italic; }
+  .pill-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="rig">
+  <div class="readout">Volume: <span id="vol">50</span></div>
+  <div class="stage">
+    <div class="beam" id="beam">
+      <div class="groove"></div>
+      <div class="bubble" id="bubble"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Glass footer pill -->
+<div id="footer-bar">
+  <span class="pill-title">Seesaw Volume</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">tilt the slider and let gravity roll the value around</span>
+  <span class="footer-sep"></span>
+  <span class="pill-credit">made by welchj</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
+</div>
+
+<script>
+(function () {
+  const beam   = document.getElementById('beam');
+  const bubble = document.getElementById('bubble');
+  const volEl  = document.getElementById('vol');
+
+  const HALF      = 180;                    // beam half-width (px)
+  const MAX_S     = HALF - 30;              // bubble travel limit from center
+  const MAX_ANGLE = 32 * Math.PI / 180;     // tilt clamp (radians)
+  const SIN_MAX   = Math.sin(MAX_ANGLE);
+  const G         = 1500;                   // gravity accel (px/s^2)
+
+  let angle = 0;       // current tilt (rad), + = right side down
+  let s     = 0;       // bubble position along beam, -MAX_S..MAX_S
+  let v     = 0;       // bubble velocity along beam
+
+  // ── Dragging tilts the beam (pull the grabbed point toward the mouse) ──
+  let dragging = false, grabR = 0;
+
+  function pivot() {
+    const r = beam.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  beam.addEventListener('mousedown', e => {
+    dragging = true;
+    grabR = e.clientX - pivot().x;          // signed distance of grab from pivot
+    if (Math.abs(grabR) < 24) grabR = grabR < 0 ? -24 : 24;
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const p = pivot();
+    let sinT = (e.clientY - p.y) / grabR;   // angle that puts grab point at mouse Y
+    sinT = Math.max(-SIN_MAX, Math.min(SIN_MAX, sinT));
+    angle = Math.asin(sinT);
+  });
+
+  window.addEventListener('mouseup', () => { dragging = false; });  // tilt freezes
+
+  // ── Physics: gravity rolls the bubble along the incline ──
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.04, (now - last) / 1000);
+    last = now;
+
+    v += G * Math.sin(angle) * dt;          // downhill acceleration
+    v *= 0.985;                             // rolling friction
+    s += v * dt;
+
+    if (s > MAX_S)  { s = MAX_S;  v = 0; }  // absorb at the ends
+    if (s < -MAX_S) { s = -MAX_S; v = 0; }
+
+    beam.style.transform = `rotate(${angle}rad)`;
+    bubble.style.left = (HALF + s) + 'px';
+
+    const vol = Math.round((s + MAX_S) / (2 * MAX_S) * 100);
+    volEl.textContent = vol;
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+// Magnet effect
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>

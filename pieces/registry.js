@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'seesaw-volume',
+    title: 'Seesaw Volume',
+    sin: 'Tilt the slider and let gravity roll the value around',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'cursor-decoys',
     title: 'Cursor Decoys',
     sin: 'Every click hides your cursor among more identical decoys',
