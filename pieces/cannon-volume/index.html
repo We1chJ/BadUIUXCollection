@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cannon Volume — BAD UI UX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Inter, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #222;
+    user-select: none;
+  }
+
+  /* ── Back button ── */
+  .back {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; text-decoration: none; color: #000;
+    border: 2px solid #000; padding: 6px 12px; box-shadow: 3px 3px 0 #000;
+    background: #fff; transition: background 0.15s, color 0.15s;
+  }
+  .back:hover { background: #000; color: #fff; }
+
+  /* ── Stage ── */
+  .stage { position: relative; width: 560px; height: 240px; }
+
+  .readout {
+    position: absolute; left: 130px; top: 96px;
+    font-size: 16px; font-weight: 600; color: #555;
+  }
+  .readout b { color: #7c3aed; }
+
+  /* volume track */
+  .track {
+    position: absolute; left: 150px; top: 148px;
+    width: 320px; height: 4px;
+    background: #dcdcdc; border-radius: 999px;
+  }
+  .track-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    width: 0; background: #7c3aed; border-radius: 999px;
+  }
+
+  /* cannon = speaker icon */
+  #cannon {
+    position: absolute; left: 52px; top: 122px;
+    width: 56px; height: 56px;
+    cursor: pointer;
+    transform-origin: 50% 50%;
+  }
+  #cannon svg { width: 100%; height: 100%; display: block; }
+
+  /* charge power meter */
+  .meter {
+    position: absolute; left: 50px; top: 104px;
+    width: 60px; height: 7px;
+    background: #eee; border: 1px solid #ccc; border-radius: 999px;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .meter.on { opacity: 1; }
+  .meter-fill {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, #43a047, #fbc02d, #e53935);
+    border-radius: 999px;
+  }
+
+  /* the dot / cannonball */
+  #dot {
+    position: absolute; left: 0; top: 0;
+    width: 18px; height: 18px;
+    margin: -9px 0 0 -9px;
+    border-radius: 50%;
+    background: #7c3aed;
+    box-shadow: 0 2px 5px rgba(124,58,237,0.4);
+  }
+
+  /* ── Glass footer pill ── */
+  #footer-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 9000; display: flex; align-items: center; gap: 18px;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    font-family: Inter, sans-serif; font-size: 13px; white-space: nowrap; color: #fff;
+  }
+  #footer-bar a {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: #fff; text-decoration: none; letter-spacing: 0.03em;
+    transition: opacity 0.15s ease;
+  }
+  #footer-bar a:hover { opacity: 0.65; }
+  #footer-bar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+  .pill-title { font-weight: 600; letter-spacing: 0.02em; }
+  .pill-sin    { color: rgba(255,255,255,0.65); font-style: italic; }
+  .pill-credit { color: rgba(255,255,255,0.35); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../../gallery.html">← Gallery</a>
+
+<div class="stage">
+  <div class="readout">Volume: <b id="vol">0</b></div>
+
+  <div class="track"><div class="track-fill" id="fill"></div></div>
+
+  <div class="meter" id="meter"><div class="meter-fill" id="meter-fill"></div></div>
+
+  <div id="cannon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 9 H7 L12 4.5 V19.5 L7 15 H3 Z" fill="#6e6e6e"/>
+      <path d="M15.5 8.5 a4.5 4.5 0 0 1 0 7" fill="none" stroke="#6e6e6e" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M17.5 6 a7.5 7.5 0 0 1 0 12" fill="none" stroke="#6e6e6e" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div id="dot"></div>
+</div>
+
+<!-- Glass footer pill -->
+<div id="footer-bar">
+  <span class="pill-title">Cannon Volume</span>
+  <span class="footer-sep"></span>
+  <span class="pill-sin">charge the speaker and fire the dot onto the bar to set volume</span>
+  <span class="footer-sep"></span>
+  <span class="pill-credit">made by welchj</span>
+  <span class="footer-sep"></span>
+  <a href="https://github.com/We1chJ/BadUIUXCollection" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.6 18 4.9 18 4.9c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+  </a>
+</div>
+
+<script>
+(function () {
+  const cannon    = document.getElementById('cannon');
+  const dot       = document.getElementById('dot');
+  const fill      = document.getElementById('fill');
+  const volEl     = document.getElementById('vol');
+  const meter     = document.getElementById('meter');
+  const meterFill = document.getElementById('meter-fill');
+
+  // ── Geometry (stage-local px) ──
+  const LX = 110, LY = 150;          // muzzle / launch point (on the track line)
+  const BAR_X0 = 150, BAR_X1 = 470;  // volume bar span
+  const BAR_LEN = BAR_X1 - BAR_X0;
+
+  // ── Physics ──
+  const THETA = 65 * Math.PI / 180;  // launch angle
+  const G = 2000;                    // gravity (px/s^2)
+  const V_MAX = 970;                 // full-charge speed (lands at bar end)
+  const V_MIN = 220;                 // a tap still lobs it a little
+  const CHARGE_MS = 1100;            // time to reach full charge
+
+  let charging = false, chargeStart = 0, power = 0;
+  let flying = false, px = LX, py = LY, vx = 0, vy = 0;
+
+  function placeDot(x, y) {
+    dot.style.left = x + 'px';
+    dot.style.top  = y + 'px';
+  }
+
+  function setVolumeFromX(x) {
+    const clamped = Math.max(BAR_X0, Math.min(BAR_X1, x));
+    const vol = Math.round((clamped - BAR_X0) / BAR_LEN * 100);
+    fill.style.width = (clamped - BAR_X0) + 'px';
+    volEl.textContent = vol;
+  }
+
+  // rest in the cannon to start
+  placeDot(LX, LY);
+
+  cannon.addEventListener('mousedown', e => {
+    if (flying) return;
+    charging = true;
+    chargeStart = performance.now();
+    meter.classList.add('on');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!charging) return;
+    charging = false;
+    meter.classList.remove('on');
+    const v = V_MIN + power * (V_MAX - V_MIN);
+    vx = v * Math.cos(THETA);
+    vy = -v * Math.sin(THETA);       // upward (screen y grows downward)
+    px = LX; py = LY;
+    flying = true;
+    power = 0;
+    meterFill.style.width = '0%';
+  });
+
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.03, (now - last) / 1000);
+    last = now;
+
+    if (charging) {
+      power = Math.min(1, (now - chargeStart) / CHARGE_MS);
+      meterFill.style.width = (power * 100) + '%';
+      const s = 1 + power * 0.12;
+      cannon.style.transform = `scale(${s})`;
+    } else if (!flying) {
+      cannon.style.transform = 'scale(1)';
+    }
+
+    if (flying) {
+      vy += G * dt;
+      px += vx * dt;
+      py += vy * dt;
+      if (py >= LY && vy > 0) {       // landed back on the track line
+        py = LY;
+        flying = false;
+        const restX = Math.max(BAR_X0, Math.min(BAR_X1, px));
+        placeDot(restX, LY);
+        setVolumeFromX(px);
+      } else {
+        placeDot(px, py);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+// Magnet effect
+(function () {
+  const bar = document.getElementById('footer-bar');
+  const PADDING = 80, STRENGTH = 3;
+  let tarX = 0, tarY = 0, curX = 0, curY = 0, raf = null;
+  function tick() {
+    curX += (tarX - curX) * 0.12;
+    curY += (tarY - curY) * 0.12;
+    bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+    if (Math.abs(tarX - curX) > 0.05 || Math.abs(tarY - curY) > 0.05) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      curX = tarX; curY = tarY;
+      bar.style.transform = `translateX(calc(-50% + ${curX}px)) translateY(${curY}px)`;
+      raf = null;
+    }
+  }
+  window.addEventListener('mousemove', e => {
+    const r = bar.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.abs(dx) < r.width / 2 + PADDING && Math.abs(dy) < r.height / 2 + PADDING) {
+      tarX = dx / STRENGTH; tarY = dy / STRENGTH;
+    } else { tarX = 0; tarY = 0; }
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>

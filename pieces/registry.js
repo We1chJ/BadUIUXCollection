@@ -2,6 +2,13 @@
 // To publish a piece: make sure pieces/{id}/index.html exists.
 window.PIECES = [
   {
+    id: 'cannon-volume',
+    title: 'Cannon Volume',
+    sin: 'Charge the speaker and fire the dot onto the bar to set volume',
+    dateAdded: '2026-06-03',
+    credit: 'welchj',
+  },
+  {
     id: 'seesaw-volume',
     title: 'Seesaw Volume',
     sin: 'Tilt the slider and let gravity roll the value around',
