@@ -109,10 +109,14 @@
   const STRENGTH = 16;    // push force at point-blank range
   const FRICTION = 0.86;  // velocity damping per frame
   const BOUNCE   = 0.55;  // energy kept on wall hit
+  const SPRING   = 0.012; // pull back toward home (bottom-center)
 
-  // button center position
-  let bx = window.innerWidth * 0.18;
-  let by = window.innerHeight * 0.68;
+  function home() {
+    return { x: window.innerWidth / 2, y: window.innerHeight * 0.64 };
+  }
+
+  // button center position — start at home
+  let bx = home().x, by = home().y;
   let vx = 0, vy = 0;
   let mx = -9999, my = -9999;
   let caught = false;
@@ -134,6 +138,11 @@
       vx += (dx / dist) * f;
       vy += (dy / dist) * f;
     }
+
+    // spring back to home so it settles below the text, never stuck in a corner
+    const h = home();
+    vx += (h.x - bx) * SPRING;
+    vy += (h.y - by) * SPRING;
 
     vx *= FRICTION;
     vy *= FRICTION;
